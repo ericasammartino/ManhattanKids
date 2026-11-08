@@ -1,69 +1,198 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getEnrichedActivities, CATEGORIES, CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/data";
+import ActivityCard from "@/components/ActivityCard";
+import SearchBar from "@/components/SearchBar";
 
 export default function Home() {
+  const allActivities = getEnrichedActivities();
+
+  // Pick highlights — activities with sessions (upcoming events)
+  const withSessions = allActivities.filter((a) => (a.sessions?.length ?? 0) > 0);
+  const highlights = withSessions.slice(0, 3);
+
+  // Fall favorites — a curated set
+  const fallFavorites = allActivities
+    .filter((a) => a["Seasonal Tags"]?.includes("Fall") || a["Activity Type"] === "Event")
+    .slice(0, 4);
+
+  const afterschool = allActivities
+    .filter((a) => a["Activity Type"] === "Afterschool Program")
+    .slice(0, 4);
+
+  const stats = {
+    activities: allActivities.length,
+    organizations: new Set(allActivities.map((a) => a["Organization ID"])).size,
+    neighborhoods: new Set(
+      allActivities.map((a) => a.location?.["Neighborhood"]).filter(Boolean)
+    ).size,
+  };
+
+  const categories = CATEGORIES.slice(0, 5);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div>
+      {/* Hero */}
+      <section className="px-4 pt-12 pb-10 max-w-6xl mx-auto">
+        <div className="max-w-lg">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-3">
+            The Best Kids&apos; Activities in Manhattan
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-gray-500 text-base mb-6">
+            Classes, camps, museums, events and more. All in one place for NYC families.
           </p>
+          <SearchBar />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Stats strip */}
+        <div className="flex flex-wrap gap-6 mt-8">
+          <div className="text-sm text-gray-500">
+            <span className="font-bold text-gray-900 text-lg">{stats.activities}+</span> activities
+          </div>
+          <div className="text-sm text-gray-500">
+            <span className="font-bold text-gray-900 text-lg">{stats.organizations}+</span> organizations
+          </div>
+          <div className="text-sm text-gray-500">
+            <span className="font-bold text-gray-900 text-lg">{stats.neighborhoods}+</span> neighborhoods
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Explore by Interest */}
+      <section className="px-4 pb-12 max-w-6xl mx-auto">
+        <h2 className="text-xl font-bold text-gray-900 mb-5">Explore by Interest</h2>
+        <div className="flex flex-wrap gap-4">
+          {categories.map((category) => {
+            const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
+            const icon = CATEGORY_ICONS[category] ?? "🎯";
+            const bg = colorClass.split(" ")[0];
+            return (
+              <Link
+                key={category}
+                href={`/activities?category=${encodeURIComponent(category)}`}
+                className={`flex flex-col items-center justify-center w-24 h-24 rounded-full ${bg} hover:opacity-80 transition-opacity cursor-pointer`}
+              >
+                <span className="text-2xl mb-1">{icon}</span>
+                <span className="text-xs font-semibold text-center leading-tight px-2 text-gray-800">
+                  {category}
+                </span>
+              </Link>
+            );
+          })}
+          <Link
+            href="/activities"
+            className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <span className="text-2xl mb-1">→</span>
+            <span className="text-xs font-semibold text-center text-gray-600">View All</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* Highlights */}
+      {highlights.length > 0 && (
+        <section className="px-4 pb-12 max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900">Highlights</h2>
+            <Link
+              href="/activities"
+              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            >
+              explore all activities →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {highlights.map((activity) => (
+              <ActivityCard key={activity["Activity ID"]} activity={activity} variant="highlight" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Fall Favorites */}
+      <section className="px-4 pb-12 max-w-6xl mx-auto">
+        <h2 className="text-xl font-bold text-gray-900 mb-5">Fall Favorites</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {(fallFavorites.length > 0 ? fallFavorites : allActivities.slice(0, 4)).map((activity) => (
+            <ActivityCard key={activity["Activity ID"]} activity={activity} variant="compact" />
+          ))}
+        </div>
+      </section>
+
+      {/* More sections */}
+      <section className="px-4 pb-12 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Link
+            href="/activities?type=Afterschool+Program"
+            className="group p-6 rounded-2xl border-2 border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all"
+          >
+            <div className="text-3xl mb-2">🏫</div>
+            <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-green-800">
+              Afterschool Programs
+            </h3>
+            <p className="text-sm text-gray-500">
+              Regular enrichment classes and programs for school-age kids.
+            </p>
+          </Link>
+
+          <Link
+            href="/activities?type=Camp"
+            className="group p-6 rounded-2xl border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
+          >
+            <div className="text-3xl mb-2">⛺</div>
+            <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-blue-800">
+              Camps & Workshops
+            </h3>
+            <p className="text-sm text-gray-500">
+              Day camps, weekend workshops, and intensive programs.
+            </p>
+          </Link>
+
+          <Link
+            href="/activities?type=Event"
+            className="group p-6 rounded-2xl border-2 border-gray-100 hover:border-yellow-200 hover:bg-yellow-50 transition-all"
+          >
+            <div className="text-3xl mb-2">🎉</div>
+            <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-yellow-800">
+              Upcoming Events
+            </h3>
+            <p className="text-sm text-gray-500">
+              One-time events, performances, and special programming.
+            </p>
+          </Link>
+
+          <Link
+            href="/activities?type=Drop-in"
+            className="group p-6 rounded-2xl border-2 border-gray-100 hover:border-rose-200 hover:bg-rose-50 transition-all"
+          >
+            <div className="text-3xl mb-2">🚶</div>
+            <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-rose-800">
+              Drop-in Activities
+            </h3>
+            <p className="text-sm text-gray-500">
+              No registration required — just show up and play.
+            </p>
+          </Link>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-4 pb-16 max-w-6xl mx-auto">
+        <div
+          className="rounded-3xl p-8 text-white text-center"
+          style={{ background: "linear-gradient(135deg, #2d5a3d, #4a7c5f)" }}
+        >
+          <h2 className="text-2xl font-bold mb-2">Know of a great activity?</h2>
+          <p className="text-green-100 mb-5 text-sm">
+            We&apos;re always looking to expand our database with new activities for NYC families.
+          </p>
+          <Link
+            href="/admin"
+            className="inline-block px-6 py-2.5 bg-white text-green-800 font-semibold rounded-full hover:bg-green-50 transition-colors"
+          >
+            Submit an Activity
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
