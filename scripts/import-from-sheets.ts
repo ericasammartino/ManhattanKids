@@ -1,88 +1,70 @@
 /**
- * Google Sheets Import Script
- *
- * Fetches data from your Google Sheets database and writes JSON files
- * to src/data/. Designed to run as a cron job or GitHub Action.
+ * Google Sheets Import Script (API Key auth — no service account needed)
  *
  * Setup:
- *   1. Export your Excel file to Google Sheets (File > Upload to Sheets)
- *   2. Create a Google Cloud project at console.cloud.google.com
- *   3. Enable the Google Sheets API
- *   4. Create a Service Account and download the JSON key
- *   5. Share your Google Sheet with the service account email
- *   6. Set environment variables:
- *        GOOGLE_SHEETS_ID=<your-spreadsheet-id>
- *        GOOGLE_SERVICE_ACCOUNT_KEY=<base64-encoded-json-key>
+ *   1. Open your Google Sheet
+ *   2. Click Share → General access → "Anyone with the link" → Viewer → Done
+ *   3. Go to Google Cloud → APIs & Services → Credentials
+ *      → + Create Credentials → API Key → copy the key
+ *   4. Add two GitHub secrets:
+ *        GOOGLE_SHEETS_ID  = the ID from your Sheets URL (between /d/ and /edit)
+ *        GOOGLE_API_KEY    = the API key you just copied
  *
  * Usage:
- *   npx tsx scripts/import-from-sheets.ts
- *
- * GitHub Actions example (.github/workflows/import.yml):
- *   on:
- *     schedule:
- *       - cron: '0 6 * * *'   # every day at 6am UTC
- *   jobs:
- *     import:
- *       runs-on: ubuntu-latest
- *       steps:
- *         - uses: actions/checkout@v4
- *         - uses: actions/setup-node@v4
- *           with: { node-version: '20' }
- *         - run: npm ci
- *         - run: npx tsx scripts/import-from-sheets.ts
- *           env:
- *             GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
- *             GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
- *         - run: git add src/data && git diff --cached --quiet || git commit -m "chore: sync data from Google Sheets [skip ci]"
- *         - run: git push
+ *   GOOGLE_SHEETS_ID=xxx GOOGLE_API_KEY=xxx npx tsx scripts/import-from-sheets.ts
  */
 
 import * as fs from "fs";
 import * as path from "path";
+import * as https from "https";
 
 const SHEET_NAMES: Record<string, string> = {
-  "Organizations": "organizations",
-  "Locations": "locations",
-  "Activities": "activities",
-  "Sessions": "sessions",
+  Organizations: "organizations",
+  Locations: "locations",
+  Activities: "activities",
+  Sessions: "sessions",
   "Incoming Data": "incoming",
 };
 
+function httpsGet(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => resolve(data));
+      })
+      .on("error", reject);
+  });
+}
+
 async function fetchSheet(
   sheetsId: string,
-  sheetName: string,
-  auth: { client_email: string; private_key: string }
-): Promise<Record<string, unknown>[]> {
-  // Dynamically import googleapis (run: npm install googleapis)
-  const { google } = await import("googleapis").catch(() => {
-    throw new Error("googleapis package not found. Run: npm install googleapis");
-  });
+  apiKey: string,
+  sheetName: string
+): Promise<Record<string, string | null>[]> {
+  const encodedName = encodeURIComponent(sheetName);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${encodedName}?key=${apiKey}`;
 
-  const authClient = new google.auth.JWT({
-    email: auth.client_email,
-    key: auth.private_key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
+  const raw = await httpsGet(url);
+  const json = JSON.parse(raw);
 
-  const sheets = google.sheets({ version: "v4", auth: authClient });
+  if (json.error) {
+    throw new Error(`Sheets API error on "${sheetName}": ${json.error.message}`);
+  }
 
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetsId,
-    range: `${sheetName}!A1:ZZ`,
-  });
-
-  const rows = response.data.values ?? [];
+  const rows: string[][] = json.values ?? [];
   if (rows.length < 2) return [];
 
-  const headers = rows[0] as string[];
+  const headers = rows[0];
   return rows
     .slice(1)
     .filter((row) => row[0] !== undefined && row[0] !== "")
     .map((row) => {
-      const record: Record<string, unknown> = {};
+      const record: Record<string, string | null> = {};
       headers.forEach((header, i) => {
         if (header) {
-          record[header] = (row[i] as string | undefined) ?? null;
+          record[header] = row[i] ?? null;
         }
       });
       return record;
@@ -91,32 +73,34 @@ async function fetchSheet(
 
 async function main() {
   const sheetsId = process.env.GOOGLE_SHEETS_ID;
-  const keyBase64 = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const apiKey = process.env.GOOGLE_API_KEY;
 
-  if (!sheetsId || !keyBase64) {
+  if (!sheetsId || !apiKey) {
     console.error(
-      "Missing environment variables: GOOGLE_SHEETS_ID and GOOGLE_SERVICE_ACCOUNT_KEY are required."
+      "Missing environment variables.\n" +
+        "Required: GOOGLE_SHEETS_ID and GOOGLE_API_KEY\n\n" +
+        "Run as:\n" +
+        "  GOOGLE_SHEETS_ID=xxx GOOGLE_API_KEY=xxx npx tsx scripts/import-from-sheets.ts"
     );
     process.exit(1);
   }
 
-  const keyJson = JSON.parse(Buffer.from(keyBase64, "base64").toString("utf-8"));
   const outputDir = "src/data";
   fs.mkdirSync(outputDir, { recursive: true });
 
   for (const [sheetName, outputName] of Object.entries(SHEET_NAMES)) {
     try {
       console.log(`📡 Fetching sheet: ${sheetName}…`);
-      const records = await fetchSheet(sheetsId, sheetName, keyJson);
+      const records = await fetchSheet(sheetsId, apiKey, sheetName);
       const outputPath = path.join(outputDir, `${outputName}.json`);
       fs.writeFileSync(outputPath, JSON.stringify(records, null, 2));
       console.log(`✅ ${sheetName} → ${outputPath} (${records.length} records)`);
     } catch (err) {
-      console.error(`❌ Failed to fetch ${sheetName}:`, err);
+      console.error(`❌ Failed to fetch "${sheetName}":`, err);
     }
   }
 
-  console.log("\n🎉 Sync complete!");
+  console.log("\n🎉 Sync complete! Run `npm run build` to publish the updates.");
 }
 
 main().catch((err) => {

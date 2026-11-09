@@ -5,7 +5,7 @@ on:
     # Run every day at 6am UTC (2am Eastern)
     - cron: "0 6 * * *"
   workflow_dispatch:
-    # Allow manual trigger from GitHub Actions UI
+    # Allow manual trigger from the GitHub Actions UI
 
 jobs:
   sync:
@@ -26,13 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install googleapis
-        run: npm install googleapis tsx --save-dev
-
       - name: Sync data from Google Sheets
         env:
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: npx tsx scripts/import-from-sheets.ts
 
       - name: Commit and push updated data
