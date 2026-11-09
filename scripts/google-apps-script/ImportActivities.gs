@@ -39,7 +39,7 @@ const DAYS_AHEAD = 60;
 // ============================================================
 // 🏛️  WORDPRESS SITES (The Events Calendar plugin)
 // Test any site by visiting: https://[site]/wp-json/tribe/events/v1/events
-// If you see data, add it to this list!
+// If you see JSON data, add it here!
 // ============================================================
 const WP_EVENTS_SOURCES = [
   {
@@ -48,12 +48,7 @@ const WP_EVENTS_SOURCES = [
     defaultCategory: "Museums & Culture",
     defaultType: "Event",
   },
-  {
-    url: "https://smartcookiekids.com",
-    name: "Smart Cookie Kids",
-    defaultCategory: "Learning & Enrichment",
-    defaultType: "Class",
-  },
+  // Smart Cookie Kids removed — their site doesn't expose the Events Calendar API
   // ➕ ADD MORE HERE — copy the block above, change the values:
   // {
   //   url: "https://example-kids-site.com",
@@ -66,45 +61,34 @@ const WP_EVENTS_SOURCES = [
 // ============================================================
 // 📰  RSS FEED SOURCES
 // Many sites publish an RSS feed of their events.
-// Test by visiting: https://[site]/events/feed or https://[site]/feed
+// Test by visiting: https://[site]/feed or https://[site]/events/feed
 // ============================================================
 const RSS_SOURCES = [
-  {
-    url: "https://www.tada.org/events/feed",
-    name: "TADA Youth Theater",
-    defaultCategory: "Entertainment",
-    defaultType: "Event",
-  },
-  {
-    url: "https://www.paperbagplayers.org/feed",
-    name: "Paper Bag Players",
-    defaultCategory: "Entertainment",
-    defaultType: "Event",
-  },
-  // ➕ ADD MORE RSS FEEDS HERE
+  // ➕ ADD RSS FEEDS HERE as you find them
+  // Test a site's feed by visiting its URL in your browser first
+  // Example:
+  // {
+  //   url: "https://example-site.com/events/feed",
+  //   name: "Example Theater",
+  //   defaultCategory: "Entertainment",
+  //   defaultType: "Event",
+  // },
 ];
 
 // ============================================================
 // 🗽  NYC OPEN DATA — Government data, always free, no key needed
-// Includes parks programs, recreation center classes, library events
 // ============================================================
 const NYC_OPEN_DATA_SOURCES = [
-  {
-    // NYC Parks Permit Events
-    endpoint: "https://data.cityofnewyork.us/resource/h2h8-mu7f.json",
-    name: "NYC Parks Events",
-    defaultCategory: "Events & Experiences",
-    defaultType: "Event",
-    enabled: true,
-  },
-  {
-    // DYCD After-School Programs
-    endpoint: "https://data.cityofnewyork.us/resource/mh3r-gc98.json",
-    name: "NYC After-School Programs",
-    defaultCategory: "Learning & Enrichment",
-    defaultType: "Afterschool Program",
-    enabled: true,
-  },
+  // Disabled until correct dataset IDs are confirmed
+  // ➕ ADD DATASETS HERE — find them at data.cityofnewyork.us
+  // Example:
+  // {
+  //   endpoint: "https://data.cityofnewyork.us/resource/DATASET-ID.json",
+  //   name: "NYC Parks Programs",
+  //   defaultCategory: "Events & Experiences",
+  //   defaultType: "Event",
+  //   enabled: true,
+  // },
 ];
 
 // ============================================================
@@ -353,14 +337,17 @@ function fetchEventbrite() {
   for (const search of EVENTBRITE_SEARCHES) {
     const url = "https://www.eventbriteapi.com/v3/events/search/" +
       "?q=" + encodeURIComponent(search.query) +
-      "&location.address=Manhattan,+New+York,+NY" +
+      "&location.latitude=40.7831" +
+      "&location.longitude=-73.9712" +
       "&location.within=10km" +
       "&start_date.range_start=" + start +
-      "&expand=venue,organizer" +
-      "&token=" + EVENTBRITE_API_KEY;
+      "&expand=venue,organizer";
 
     try {
-      const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      const res = UrlFetchApp.fetch(url, {
+        muteHttpExceptions: true,
+        headers: { "Authorization": "Bearer " + EVENTBRITE_API_KEY },
+      });
       if (res.getResponseCode() !== 200) continue;
       const data = JSON.parse(res.getContentText());
 
