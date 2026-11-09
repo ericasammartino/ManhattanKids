@@ -109,34 +109,35 @@ const NYC_OPEN_DATA_SOURCES = [
 
 // ============================================================
 // 🎟️  EVENTBRITE SEARCH TERMS
-// These searches run on Eventbrite to find kids events in NYC.
-// Add or remove terms to tune what you find.
+// Kept to 4 broad searches to stay within Google's 6-minute limit.
+// Each returns up to 50 results, so you still get 200 events per run.
 // ============================================================
 const EVENTBRITE_SEARCHES = [
-  { query: "kids activities Manhattan",        category: "Events & Experiences" },
-  { query: "children workshop New York City",  category: "Learning & Enrichment" },
-  { query: "family events NYC",                category: "Events & Experiences" },
-  { query: "toddler class Manhattan",          category: "Learning & Enrichment" },
-  { query: "kids art class NYC",               category: "Arts & Creativity" },
-  { query: "kids sports NYC",                  category: "Sports & Movement" },
-  { query: "kids cooking class NYC",           category: "Food & Cooking" },
-  { query: "kids theater NYC",                 category: "Entertainment" },
-  { query: "kids STEM class Manhattan",        category: "STEM & Discovery" },
-  { query: "kids museum program NYC",          category: "Museums & Culture" },
-  { query: "library storytime Manhattan",      category: "Learning & Enrichment" },
-  { query: "kids dance class NYC",             category: "Sports & Movement" },
+  { query: "kids Manhattan",          category: "Events & Experiences" },
+  { query: "children New York",       category: "Learning & Enrichment" },
+  { query: "family activities NYC",   category: "Events & Experiences" },
+  { query: "toddler New York City",   category: "Learning & Enrichment" },
 ];
 
 // Sheet names
 const INCOMING_SHEET_NAME  = "Incoming Data";
 const SOURCE_MONITOR_NAME  = "Source Monitor";
 
+// Stop processing if within 30 seconds of the 6-minute limit
+const MAX_RUNTIME_MS = 5.5 * 60 * 1000;
+let START_TIME;
+
 
 // ============================================================
 // 🚀  MAIN — runs all sources
 // ============================================================
 
+function timeIsUp() {
+  return (Date.now() - START_TIME) > MAX_RUNTIME_MS;
+}
+
 function importAllSources() {
+  START_TIME = Date.now();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(INCOMING_SHEET_NAME);
   if (!sheet) { Logger.log("ERROR: Sheet '" + INCOMING_SHEET_NAME + "' not found"); return; }
@@ -148,6 +149,7 @@ function importAllSources() {
 
   // --- WordPress Events Calendar sites ---
   for (const source of WP_EVENTS_SOURCES) {
+    if (timeIsUp()) { summary.push("⏱ Stopped early — time limit reached"); break; }
     try {
       const events = fetchWordPressSite(source);
       const fresh = events.filter(e => !existingUrls.has(e.sourceUrl));
@@ -162,6 +164,7 @@ function importAllSources() {
 
   // --- RSS feeds ---
   for (const source of RSS_SOURCES) {
+    if (timeIsUp()) { summary.push("⏱ Stopped early — time limit reached"); break; }
     try {
       const events = fetchRSSFeed(source);
       const fresh = events.filter(e => !existingUrls.has(e.sourceUrl));
@@ -174,6 +177,7 @@ function importAllSources() {
 
   // --- NYC Open Data ---
   for (const source of NYC_OPEN_DATA_SOURCES) {
+    if (timeIsUp()) { summary.push("⏱ Stopped early — time limit reached"); break; }
     if (!source.enabled) continue;
     try {
       const events = fetchNYCOpenData(source);
@@ -186,7 +190,7 @@ function importAllSources() {
   }
 
   // --- Eventbrite ---
-  if (EVENTBRITE_API_KEY) {
+  if (EVENTBRITE_API_KEY && !timeIsUp()) {
     try {
       const events = fetchEventbrite();
       const fresh = events.filter(e => !existingUrls.has(e.sourceUrl));
@@ -195,7 +199,7 @@ function importAllSources() {
     } catch (err) {
       errors.push("❌ Eventbrite: " + err.message);
     }
-  } else {
+  } else if (!EVENTBRITE_API_KEY) {
     summary.push("⚠️  Eventbrite: skipped (no API key set)");
   }
 
@@ -386,7 +390,6 @@ function fetchEventbrite() {
         });
       }
 
-      Utilities.sleep(500); // be polite to the API
     } catch (err) {
       Logger.log("Eventbrite search error (" + search.query + "): " + err.message);
     }
