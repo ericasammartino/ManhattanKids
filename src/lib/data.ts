@@ -13,12 +13,12 @@ import type {
 } from "@/types";
 
 export const getOrganizations = (): Organization[] =>
-  organizations as Organization[];
-export const getLocations = (): Location[] => locations as Location[];
-export const getActivities = (): Activity[] => activities as Activity[];
-export const getSessions = (): Session[] => sessions as Session[];
+  organizations as unknown as Organization[];
+export const getLocations = (): Location[] => locations as unknown as Location[];
+export const getActivities = (): Activity[] => activities as unknown as Activity[];
+export const getSessions = (): Session[] => sessions as unknown as Session[];
 export const getIncomingActivities = (): IncomingActivity[] =>
-  incoming as IncomingActivity[];
+  incoming as unknown as IncomingActivity[];
 
 export function getEnrichedActivities(): EnrichedActivity[] {
   const orgs = getOrganizations();

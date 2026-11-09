@@ -40,7 +40,7 @@ export default function ActivitiesClient({ activities }: Props) {
 
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
-  const [neighborhood, setNeighborhood] = useState("all");
+  const [neighborhood, setNeighborhood] = useState(searchParams.get("neighborhood") ?? "Upper West Side");
   const [activityType, setActivityType] = useState(searchParams.get("type") ?? "all");
   const [schedulePattern, setSchedulePattern] = useState("all");
   const [ageMin, setAgeMin] = useState<number | null>(null);
@@ -78,10 +78,38 @@ export default function ActivitiesClient({ activities }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Neighborhood banner */}
+      <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="font-semibold text-green-900 text-sm">
+            📍 Currently showing: Upper West Side
+          </div>
+          <div className="text-green-700 text-xs mt-0.5">
+            More neighborhoods coming soon — Midtown, UES, Downtown and more.
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {["Upper West Side", "all"].map((n) => (
+            <button
+              key={n}
+              onClick={() => setNeighborhood(n)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                neighborhood === n
+                  ? "bg-green-700 text-white"
+                  : "bg-white text-green-700 border border-green-200 hover:bg-green-100"
+              }`}
+            >
+              {n === "all" ? "Show All Manhattan" : "Upper West Side Only"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Browse Activities</h1>
         <p className="text-gray-500 text-sm">
-          {filtered.length} of {activities.length} activities
+          {filtered.length} {neighborhood !== "all" ? `Upper West Side` : ""} activities
+          {neighborhood !== "all" && <span className="text-gray-400"> · <button onClick={() => setNeighborhood("all")} className="underline hover:text-gray-600">show all Manhattan</button></span>}
         </p>
       </div>
 
