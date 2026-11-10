@@ -6,12 +6,17 @@ import SearchBar from "@/components/SearchBar";
 export default function Home() {
   const allActivities = getEnrichedActivities();
 
-  // Pick highlights — activities with sessions (upcoming events)
-  const withSessions = allActivities.filter((a) => (a.sessions?.length ?? 0) > 0);
+  // UWS activities first
+  const uwsActivities = allActivities.filter(
+    (a) => a.location?.["Neighborhood"] === "Upper West Side"
+  );
+
+  // Pick highlights — UWS activities with sessions (upcoming events)
+  const withSessions = uwsActivities.filter((a) => (a.sessions?.length ?? 0) > 0);
   const highlights = withSessions.slice(0, 3);
 
-  // Fall favorites — a curated set
-  const fallFavorites = allActivities
+  // Fall favorites — UWS curated set
+  const fallFavorites = uwsActivities
     .filter((a) => a["Seasonal Tags"]?.includes("Fall") || a["Activity Type"] === "Event")
     .slice(0, 4);
 
@@ -34,11 +39,14 @@ export default function Home() {
       {/* Hero */}
       <section className="px-4 pt-12 pb-10 max-w-6xl mx-auto">
         <div className="max-w-lg">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold mb-4">
+            📍 Starting with the Upper West Side
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-3">
-            The Best Kids&apos; Activities in Manhattan
+            The Best Kids&apos; Activities on the Upper West Side
           </h1>
           <p className="text-gray-500 text-base mb-6">
-            Classes, camps, museums, events and more. All in one place for NYC families.
+            Classes, camps, museums, events and more — curated for UWS families. Expanding across Manhattan soon.
           </p>
           <SearchBar />
         </div>
@@ -51,8 +59,8 @@ export default function Home() {
           <div className="text-sm text-gray-500">
             <span className="font-bold text-gray-900 text-lg">{stats.organizations}+</span> organizations
           </div>
-          <div className="text-sm text-gray-500">
-            <span className="font-bold text-gray-900 text-lg">{stats.neighborhoods}+</span> neighborhoods
+          <div className="text-sm text-gray-500 flex items-center gap-1">
+            <span className="font-bold text-gray-900 text-lg">🏘️</span> Upper West Side
           </div>
         </div>
       </section>
@@ -79,7 +87,7 @@ export default function Home() {
             );
           })}
           <Link
-            href="/activities"
+            href="/activities?neighborhood=Upper+West+Side"
             className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             <span className="text-2xl mb-1">→</span>
@@ -97,7 +105,7 @@ export default function Home() {
               href="/activities"
               className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
             >
-              explore all activities →
+              explore all UWS activities →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
