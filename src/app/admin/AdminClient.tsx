@@ -252,20 +252,20 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
             <div className="space-y-4">
               {[
                 {
-                  title: "1. Enrich organization details",
-                  badge: "Ready to run",
+                  title: "1. Enrich Organizations in Google Sheets",
+                  badge: "Updates your spreadsheet",
                   badgeColor: "bg-emerald-100 text-emerald-700",
-                  desc: "After adding business names to the Organizations tab, run the enricher to fill website, type, description, email, phone, Instagram, and logo from public pages (and matching Location rows). Safe by default: it only fills empty fields.",
-                  cta: "npm run enrich-orgs",
+                  desc: "After adding business names in the Organizations tab, run the EnrichOrganizations Apps Script inside the sheet. It fills empty website/type/description/email/phone/Instagram fields and writes them back into the spreadsheet (including newly added rows).",
+                  cta: "scripts/google-apps-script/EnrichOrganizations.gs",
                   ctaUrl: "#",
                 },
                 {
-                  title: "2. Move database to Google Sheets",
-                  badge: "Recommended",
-                  badgeColor: "bg-green-100 text-green-700",
-                  desc: "Export your Excel file to Google Sheets. This enables a live API connection and allows multiple editors. The structure of your spreadsheet is already well-suited for this.",
-                  cta: "sheets.google.com",
-                  ctaUrl: "https://sheets.google.com",
+                  title: "2. Sync sheet → website JSON",
+                  badge: "Publishes to the site",
+                  badgeColor: "bg-blue-100 text-blue-700",
+                  desc: "npm run enrich-orgs only updates src/data/organizations.json for the website — it does not write to Google Sheets. To publish sheet changes, sync with GOOGLE_SHEETS_ID + GOOGLE_API_KEY, or re-import an exported .xlsx.",
+                  cta: "npm run sync-sheets",
+                  ctaUrl: "#",
                 },
                 {
                   title: "3. Set up Google Sheets API",
@@ -279,7 +279,7 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
                   title: "4. Schedule enrich + sheet sync",
                   badge: "Automation",
                   badgeColor: "bg-purple-100 text-purple-700",
-                  desc: "GitHub Actions already include nightly Sheets sync and a weekly organization enricher (also runnable via workflow_dispatch). After either job updates src/data, redeploy to publish.",
+                  desc: "GitHub Actions include nightly Sheets sync and a weekly JSON enricher. For spreadsheet enrichment, run EnrichOrganizations from Apps Script (or add a time-driven trigger there).",
                   cta: "See .github/workflows/",
                   ctaUrl: "#",
                 },
@@ -323,15 +323,17 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
               After running, deploy the site to publish the updates.
             </p>
             <pre className="bg-gray-900 text-green-400 text-sm rounded-xl p-4 overflow-x-auto">
-{`# From the project root:
-npm run import-data
+{`# Update the spreadsheet itself (recommended):
+# Google Sheet → Extensions → Apps Script → paste
+# scripts/google-apps-script/EnrichOrganizations.gs → Run enrichOrganizations
 
-# Fill missing organization details from public websites:
+# Website JSON only (does NOT update Google Sheets):
 npm run enrich-orgs
-npm run enrich-orgs -- --dry-run
-npm run enrich-orgs -- --id ORG-0001
 
-# Or manually:
+# Pull latest sheet rows into the site (needs env vars):
+GOOGLE_SHEETS_ID=xxx GOOGLE_API_KEY=xxx npm run sync-sheets
+
+# Or import a downloaded Excel file:
 npx tsx scripts/import-from-xlsx.ts \\
   --input your-database.xlsx \\
   --output src/data/`}
