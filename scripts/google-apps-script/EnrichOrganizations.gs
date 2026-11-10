@@ -149,6 +149,15 @@ function enrichRow_(sheet, rowNumber, row, col, orgId, name, locWebsites, today)
     website = WEBSITE_SEEDS[orgId];
     setIfBlank_(sheet, rowNumber, col, row, "Website", website, filled);
   }
+  // Discover a public website when the sheet/locations/seeds have none.
+  // Without this, most newly added businesses only get Type/Status.
+  if (!website && name) {
+    website = discoverWebsite_(name);
+    if (website) {
+      setIfBlank_(sheet, rowNumber, col, row, "Website", website, filled);
+      Utilities.sleep(400);
+    }
+  }
 
   var htmlBundle = website ? fetchOrgPages_(website) : null;
   if (htmlBundle) {
@@ -185,6 +194,37 @@ function enrichRow_(sheet, rowNumber, row, col, orgId, name, locWebsites, today)
     Logger.log("✅ " + orgId + " " + name + " → " + filled.join(", "));
   }
   return filled.length > 0;
+}
+
+function discoverWebsite_(orgName) {
+  try {
+    var query = encodeURIComponent(orgName + " Manhattan NYC kids official site");
+    var searchUrl = "https://html.duckduckgo.com/html/?q=" + query;
+    var page = fetchHtml_(searchUrl);
+    if (!page) return null;
+    var blocked =
+      /(duckduckgo|google\.|bing\.|facebook\.|yelp\.|tripadvisor|wikipedia\.org|youtube\.com|linkedin\.com|apple\.com\/maps|maps\.google)/i;
+    var uddg = page.body.match(/uddg=([^&"]+)/gi) || [];
+    var i;
+    for (i = 0; i < uddg.length; i++) {
+      try {
+        var decoded = decodeURIComponent(uddg[i].replace(/^uddg=/i, ""));
+        if (decoded && !blocked.test(decoded) && /^https?:\/\//i.test(decoded)) {
+          return decoded.replace(/\/$/, "") === decoded
+            ? decoded
+            : decoded;
+        }
+      } catch (e) {}
+    }
+    var hrefs = page.body.match(/href=["'](https?:\/\/[^"']+)["']/gi) || [];
+    for (i = 0; i < hrefs.length; i++) {
+      var url = hrefs[i].replace(/^href=["']/i, "").replace(/["']$/, "");
+      if (!blocked.test(url)) return url;
+    }
+  } catch (e) {
+    Logger.log("discoverWebsite_ failed for " + orgName + ": " + e.message);
+  }
+  return null;
 }
 
 function fetchOrgPages_(website) {
