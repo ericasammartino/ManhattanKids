@@ -252,7 +252,15 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
             <div className="space-y-4">
               {[
                 {
-                  title: "1. Move database to Google Sheets",
+                  title: "1. Enrich organization details",
+                  badge: "Ready to run",
+                  badgeColor: "bg-emerald-100 text-emerald-700",
+                  desc: "After adding business names to the Organizations tab, run the enricher to fill website, type, description, email, phone, Instagram, and logo from public pages (and matching Location rows). Safe by default: it only fills empty fields.",
+                  cta: "npm run enrich-orgs",
+                  ctaUrl: "#",
+                },
+                {
+                  title: "2. Move database to Google Sheets",
                   badge: "Recommended",
                   badgeColor: "bg-green-100 text-green-700",
                   desc: "Export your Excel file to Google Sheets. This enables a live API connection and allows multiple editors. The structure of your spreadsheet is already well-suited for this.",
@@ -260,23 +268,23 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
                   ctaUrl: "https://sheets.google.com",
                 },
                 {
-                  title: "2. Set up Google Sheets API",
-                  badge: "Required for automation",
+                  title: "3. Set up Google Sheets API",
+                  badge: "Required for sheet sync",
                   badgeColor: "bg-blue-100 text-blue-700",
-                  desc: "Create a Google Cloud project, enable the Sheets API, and generate a service account key. Add GOOGLE_SHEETS_ID and GOOGLE_SERVICE_ACCOUNT_KEY to your environment secrets.",
+                  desc: "Create a Google Cloud project, enable the Sheets API, and generate an API key. Add GOOGLE_SHEETS_ID and GOOGLE_API_KEY to your GitHub secrets for nightly sync.",
                   cta: "Google Cloud Console",
                   ctaUrl: "https://console.cloud.google.com",
                 },
                 {
-                  title: "3. Add a cron job / scheduled deploy",
+                  title: "4. Schedule enrich + sheet sync",
                   badge: "Automation",
                   badgeColor: "bg-purple-100 text-purple-700",
-                  desc: "Use Vercel Cron, GitHub Actions, or a simple cron to run the import script on a schedule (e.g. nightly). The script reads from Google Sheets and updates the JSON data files, then triggers a site rebuild.",
-                  cta: "See scripts/import-from-sheets.ts",
+                  desc: "GitHub Actions already include nightly Sheets sync and a weekly organization enricher (also runnable via workflow_dispatch). After either job updates src/data, redeploy to publish.",
+                  cta: "See .github/workflows/",
                   ctaUrl: "#",
                 },
                 {
-                  title: "4. Build a web scraper for Source Monitor",
+                  title: "5. Build a web scraper for Source Monitor",
                   badge: "Advanced",
                   badgeColor: "bg-orange-100 text-orange-700",
                   desc: "Your spreadsheet already has a 'Source Monitor' sheet tracking source URLs per organization. Build a Playwright/Puppeteer scraper that checks each URL for new events and writes them to Incoming Data for review.",
@@ -317,6 +325,11 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
             <pre className="bg-gray-900 text-green-400 text-sm rounded-xl p-4 overflow-x-auto">
 {`# From the project root:
 npm run import-data
+
+# Fill missing organization details from public websites:
+npm run enrich-orgs
+npm run enrich-orgs -- --dry-run
+npm run enrich-orgs -- --id ORG-0001
 
 # Or manually:
 npx tsx scripts/import-from-xlsx.ts \\

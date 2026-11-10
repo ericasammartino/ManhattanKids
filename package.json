@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "import-data": "tsx scripts/import-from-xlsx.ts --input",
-    "sync-sheets": "tsx scripts/import-from-sheets.ts"
+    "sync-sheets": "tsx scripts/import-from-sheets.ts",
+    "enrich-orgs": "tsx scripts/enrich-organizations.ts"
   },
   "dependencies": {
     "lucide-react": "^1.70.0",
