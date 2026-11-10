@@ -323,20 +323,18 @@ export default function AdminClient({ incoming, stats, activities }: Props) {
               After running, deploy the site to publish the updates.
             </p>
             <pre className="bg-gray-900 text-green-400 text-sm rounded-xl p-4 overflow-x-auto">
-{`# Update the spreadsheet itself (recommended):
-# Google Sheet → Extensions → Apps Script → paste
-# scripts/google-apps-script/EnrichOrganizations.gs → Run enrichOrganizations
-
-# Website JSON only (does NOT update Google Sheets):
+{`# Recommended path after sync + enrich:
 npm run enrich-orgs
+npm run export-orgs
+# → imports ~/Downloads/organizations-enriched.csv into the
+#   Organizations tab (File → Import → Replace current sheet)
+
+# Or enrich inside the sheet (Apps Script):
+# paste scripts/google-apps-script/EnrichOrganizations.gs
+# and run enrichOrganizations
 
 # Pull latest sheet rows into the site (needs env vars):
-GOOGLE_SHEETS_ID=xxx GOOGLE_API_KEY=xxx npm run sync-sheets
-
-# Or import a downloaded Excel file:
-npx tsx scripts/import-from-xlsx.ts \\
-  --input your-database.xlsx \\
-  --output src/data/`}
+GOOGLE_SHEETS_ID=xxx GOOGLE_API_KEY=xxx npm run sync-sheets`}
             </pre>
           </div>
         </div>
