@@ -1,0 +1,66 @@
+name: Enrich Organizations
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Overwrite existing non-empty fields"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      no_search:
+        description: "Skip DuckDuckGo website discovery"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  schedule:
+    # Weekly Sunday 7am UTC — fill gaps after sheet syncs
+    - cron: "0 7 * * 0"
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Enrich organization details
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FLAGS="$FLAGS --force"
+          fi
+          if [ "${{ github.event.inputs.no_search }}" = "true" ]; then
+            FLAGS="$FLAGS --no-search"
+          fi
+          npx tsx scripts/enrich-organizations.ts $FLAGS
+
+      - name: Commit and push updated organizations
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/organizations.json
+          if git diff --cached --quiet; then
+            echo "No organization changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: enrich organization details [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
