@@ -317,6 +317,10 @@ function extractPhones(html: string): string[] {
 
 function normalizePhone(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
+  // Reject obvious placeholders (000..., 1234567890, 9999999999, etc.)
+  if (/^(\d)\1{9,}$/.test(digits.replace(/^1/, "")) || digits.replace(/^1/, "") === "1234567890") {
+    return null;
+  }
   if (digits.length === 11 && digits.startsWith("1")) {
     const local = digits.slice(1);
     return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
@@ -324,6 +328,7 @@ function normalizePhone(raw: string): string | null {
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
+  if (digits === "311") return "311";
   return null;
 }
 
@@ -479,9 +484,12 @@ async function enrichOne(
     filled
   );
 
-  // Drop placeholder emails left by site templates / prior imports
+  // Drop placeholder emails/phones left by site templates / prior imports
   if (org["Contact Email"] && PLACEHOLDER_EMAIL.test(org["Contact Email"])) {
     org["Contact Email"] = null;
+  }
+  if (org.Phone && !normalizePhone(org.Phone)) {
+    org.Phone = null;
   }
 
   if (isEmpty(org.Website) && !options.noSearch) {
