@@ -9,14 +9,17 @@ interface Props {
 }
 
 export default function ActivityImage({ src, alt, className }: Props) {
+  const resolvedSrc = src?.trim() ? src : FALLBACK;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={resolvedSrc}
       alt={alt}
       className={className}
       onError={(e) => {
-        (e.target as HTMLImageElement).src = FALLBACK;
+        const img = e.target as HTMLImageElement;
+        if (img.src !== FALLBACK) img.src = FALLBACK;
       }}
     />
   );
