@@ -9,8 +9,14 @@ export default function SearchBar() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/activities?search=${encodeURIComponent(query.trim())}`);
+    const trimmed = query.trim();
+    if (trimmed) {
+      // Search citywide so a hero query is not emptied by the UWS default filter.
+      const params = new URLSearchParams({
+        search: trimmed,
+        neighborhood: "all",
+      });
+      router.push(`/activities?${params.toString()}`);
     } else {
       router.push("/activities");
     }
