@@ -189,7 +189,7 @@ export default function ActivitiesClient({ activities }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search activities, places, programs…"
-            className="w-full pl-9 pr-10 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400"
+            className="hero-search w-full pl-9 pr-10 py-2.5 rounded-full bg-white text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
             aria-label="Search activities"
           />
           {search && (
