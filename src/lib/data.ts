@@ -129,6 +129,14 @@ export function matchesSearch(activity: EnrichedActivity, query: string): boolea
   return tokens.every((token) => haystack.includes(token));
 }
 
+export const AFTERSCHOOL_ACTIVITY_TYPE = "Afterschool Program";
+
+export function isAfterschoolProgram(
+  activity: Activity | EnrichedActivity
+): boolean {
+  return nonempty(activity["Activity Type"]) === AFTERSCHOOL_ACTIVITY_TYPE;
+}
+
 export function getEnrichedActivities(): EnrichedActivity[] {
   const orgs = getOrganizations();
   const locs = getLocations();
@@ -153,6 +161,11 @@ export function getEnrichedActivities(): EnrichedActivity[] {
       sessions: actSessions,
     };
   });
+}
+
+/** Afterschool-only list for the dedicated Afterschool tab. */
+export function getAfterschoolPrograms(): EnrichedActivity[] {
+  return getEnrichedActivities().filter(isAfterschoolProgram);
 }
 
 export function getActivityById(id: string): EnrichedActivity | undefined {
