@@ -26,6 +26,22 @@ const CATEGORY_MAP: Record<string, string> = {
   Entertainment: "Entertainment",
 };
 
+/** Keep in sync with src/data/org-logos.ts */
+const ORG_LOGOS: Record<string, string> = {
+  "Marlene Meyerson JCC Manhattan": "/logos/marlene-meyerson-jcc.png",
+  "West Side YMCA Y Afterschool": "/logos/ymca.jpg",
+  "Goddard Riverside - Lincoln Center": "/logos/goddard-riverside.png",
+  "Goddard Riverside - Beacon": "/logos/goddard-riverside.png",
+  "Supermud Pottery": "/logos/supermud.jpg",
+  "Bloomingdale Library": "/logos/bloomingdale-library.png",
+  "Riverside Library": "/logos/riverside-library.png",
+  Robofun: "/logos/robofun.png",
+  ZPlaySchool: "/logos/z-play.jpg",
+  "Writopia Lab Upper West Side": "/logos/writopia-lab.png",
+  "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.jpg",
+  "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.jpg",
+};
+
 function text(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const s = String(value).trim();
@@ -172,7 +188,7 @@ async function main() {
         Website: sourceUrl,
         "Contact Email": null,
         Phone: null,
-        "Logo URL": null,
+        "Logo URL": ORG_LOGOS[orgName] ?? null,
         "Instagram URL": null,
         Status: "Active",
         "Source URL": sourceUrl,

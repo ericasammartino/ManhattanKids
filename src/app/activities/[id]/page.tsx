@@ -8,6 +8,7 @@ import {
   formatTime,
   CATEGORY_COLORS,
   CATEGORY_ICONS,
+  resolveActivityImage,
 } from "@/lib/data";
 import { MapPin, Clock, Calendar, ExternalLink, ArrowLeft, Tag } from "lucide-react";
 import ActivityImage from "@/components/ActivityImage";
@@ -32,9 +33,7 @@ export default async function ActivityDetailPage({ params }: Props) {
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
 
-  const imgSrc =
-    activity["Image URL"] ??
-    "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=800&h=400&fit=crop";
+  const { src: imgSrc, isLogo } = resolveActivityImage(activity);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -48,11 +47,19 @@ export default async function ActivityDetailPage({ params }: Props) {
       </Link>
 
       {/* Hero image */}
-      <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden bg-gray-100 mb-6">
-          <ActivityImage
+      <div
+        className={`relative h-64 md:h-80 rounded-2xl overflow-hidden mb-6 ${
+          isLogo ? "bg-[#f3eee4]" : "bg-gray-100"
+        }`}
+      >
+        <ActivityImage
           src={imgSrc}
-          alt={activity["Activity Name"]}
-          className="w-full h-full object-cover"
+          alt={activity.organization?.["Organization Name"] ?? activity["Activity Name"]}
+          className={
+            isLogo
+              ? "w-full h-full object-contain p-10"
+              : "w-full h-full object-cover"
+          }
         />
         {category && (
           <span

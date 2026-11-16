@@ -3,6 +3,7 @@ import locations from "@/data/locations.json";
 import activities from "@/data/activities.json";
 import sessions from "@/data/sessions.json";
 import incoming from "@/data/incoming.json";
+import { logoForOrganization } from "@/data/org-logos";
 import type {
   Organization,
   Location,
@@ -84,14 +85,66 @@ function withResolvedNeighborhood(location: Location): Location {
   };
 }
 
+function withOrgLogo(org: Organization): Organization {
+  const mapped = logoForOrganization(org["Organization Name"]);
+  const existing = nonempty(org["Logo URL"]);
+  return {
+    ...org,
+    "Logo URL": existing ?? mapped,
+  };
+}
+
 export const getOrganizations = (): Organization[] =>
-  organizations as unknown as Organization[];
+  (organizations as unknown as Organization[]).map(withOrgLogo);
 export const getLocations = (): Location[] =>
   (locations as unknown as Location[]).map(withResolvedNeighborhood);
 export const getActivities = (): Activity[] => activities as unknown as Activity[];
 export const getSessions = (): Session[] => sessions as unknown as Session[];
 export const getIncomingActivities = (): IncomingActivity[] =>
   incoming as unknown as IncomingActivity[];
+
+export const PLACEHOLDER_IMAGES: Record<string, string> = {
+  "Arts & Creativity":
+    "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=300&fit=crop",
+  "Sports & Movement":
+    "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=400&h=300&fit=crop",
+  "STEM & Discovery":
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+  "Museums & Culture":
+    "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
+  "Events & Experiences":
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
+  "Learning & Enrichment":
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop",
+  Entertainment:
+    "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=300&fit=crop",
+  "Nature & Outdoors":
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
+  "Food & Cooking":
+    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop",
+  default:
+    "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
+};
+
+/** Prefer activity photo, then org logo, then category placeholder. */
+export function resolveActivityImage(activity: EnrichedActivity): {
+  src: string;
+  isLogo: boolean;
+} {
+  const activityImg = nonempty(activity["Image URL"]);
+  if (activityImg) return { src: activityImg, isLogo: false };
+
+  const logo =
+    nonempty(activity.organization?.["Logo URL"]) ??
+    logoForOrganization(activity.organization?.["Organization Name"]);
+  if (logo) return { src: logo, isLogo: true };
+
+  const category = activity["Primary Category"] ?? "default";
+  return {
+    src: PLACEHOLDER_IMAGES[category] ?? PLACEHOLDER_IMAGES.default,
+    isLogo: false,
+  };
+}
 
 function activitySearchText(activity: EnrichedActivity): string {
   const parts = [
