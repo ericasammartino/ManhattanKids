@@ -26,7 +26,10 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
   const category = activity["Primary Category"] ?? "default";
   const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
   const icon = CATEGORY_ICONS[category] ?? "🎯";
-  const imgSrc = activity["Image URL"] ?? PLACEHOLDER_IMAGES[category] ?? PLACEHOLDER_IMAGES["default"];
+  const imgSrc =
+    (activity["Image URL"]?.trim() || null) ??
+    PLACEHOLDER_IMAGES[category] ??
+    PLACEHOLDER_IMAGES["default"];
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
   const locationName = activity.location?.["Location Name"] ?? activity["Default Location Name"] ?? "";
   const neighborhood = activity.location?.["Neighborhood"];

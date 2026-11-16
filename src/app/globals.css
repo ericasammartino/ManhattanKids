@@ -1,17 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf9f7;
-  --foreground: #1a1a1a;
-  --brand: #2d5a3d;
-  --brand-light: #4a7c5f;
-  --accent: #e8b84b;
+  --background: #fdfbf7;
+  --foreground: #2d293e;
+  --muted: #6b6578;
+  --border: #d5d0c8;
+  --accent: #d9a04b;
+  --accent-soft: #f3e2c4;
+  --surface: #ffffff;
+  --brand: #2d293e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-surface: var(--surface);
+  --color-brand: var(--brand);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .line-clamp-2 {
@@ -26,4 +41,64 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.55s ease-out both;
+}
+
+.animate-soft-pop {
+  animation: soft-pop 0.45s ease-out both;
+}
+
+.hero-search {
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 0 4px rgba(217, 160, 75, 0.12);
+}
+
+.hero-search:focus-within {
+  box-shadow: 0 0 0 5px rgba(217, 160, 75, 0.2);
+}
+
+.filter-chip {
+  border: 1px solid #cfc9c0;
+  background: transparent;
+  color: var(--foreground);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.filter-chip:hover {
+  border-color: #a89f92;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.interest-orb {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.interest-orb:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 8px 20px rgba(45, 41, 62, 0.08);
 }

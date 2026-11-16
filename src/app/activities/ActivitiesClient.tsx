@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { EnrichedActivity } from "@/types";
 import {
   filterActivities,
@@ -35,17 +35,67 @@ interface Props {
   activities: EnrichedActivity[];
 }
 
+function defaultNeighborhood(searchParams: URLSearchParams): string {
+  const fromUrl = searchParams.get("neighborhood");
+  if (fromUrl) return fromUrl;
+  // A search from the hero (or a shared link) should look citywide unless a
+  // neighborhood was explicitly chosen.
+  if (searchParams.get("search")) return "all";
+  return "Upper West Side";
+}
+
 export default function ActivitiesClient({ activities }: Props) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
-  const [neighborhood, setNeighborhood] = useState(searchParams.get("neighborhood") ?? "Upper West Side");
+  const [neighborhood, setNeighborhood] = useState(() =>
+    defaultNeighborhood(searchParams)
+  );
   const [activityType, setActivityType] = useState(searchParams.get("type") ?? "all");
-  const [schedulePattern, setSchedulePattern] = useState("all");
-  const [ageMin, setAgeMin] = useState<number | null>(null);
-  const [ageMax, setAgeMax] = useState<number | null>(null);
+  const [schedulePattern, setSchedulePattern] = useState(
+    searchParams.get("schedule") ?? "all"
+  );
+  const [ageMin, setAgeMin] = useState<number | null>(() => {
+    const v = searchParams.get("ageMin");
+    return v ? parseInt(v, 10) : null;
+  });
+  const [ageMax, setAgeMax] = useState<number | null>(() => {
+    const v = searchParams.get("ageMax");
+    return v ? parseInt(v, 10) : null;
+  });
   const [showFilters, setShowFilters] = useState(false);
+
+  // Keep the address bar in sync so searches/filters are shareable.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("search", search.trim());
+    if (category !== "all") params.set("category", category);
+    if (neighborhood !== "all") params.set("neighborhood", neighborhood);
+    if (activityType !== "all") params.set("type", activityType);
+    if (schedulePattern !== "all") params.set("schedule", schedulePattern);
+    if (ageMin !== null) params.set("ageMin", String(ageMin));
+    if (ageMax !== null) params.set("ageMax", String(ageMax));
+
+    const next = params.toString();
+    const current = searchParams.toString();
+    if (next !== current) {
+      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+    }
+  }, [
+    search,
+    category,
+    neighborhood,
+    activityType,
+    schedulePattern,
+    ageMin,
+    ageMax,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   const filtered = filterActivities(activities, {
     search,
@@ -58,7 +108,7 @@ export default function ActivitiesClient({ activities }: Props) {
   });
 
   const hasActiveFilters =
-    search ||
+    Boolean(search.trim()) ||
     category !== "all" ||
     neighborhood !== "all" ||
     activityType !== "all" ||
@@ -76,16 +126,19 @@ export default function ActivitiesClient({ activities }: Props) {
     setAgeMax(null);
   };
 
+  const neighborhoodLabel =
+    neighborhood === "all" ? "Manhattan" : neighborhood;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Neighborhood banner */}
       <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="font-semibold text-green-900 text-sm">
-            📍 Currently showing: Upper West Side
+            Currently showing: {neighborhoodLabel}
           </div>
           <div className="text-green-700 text-xs mt-0.5">
-            More neighborhoods coming soon — Midtown, UES, Downtown and more.
+            Starting with the Upper West Side — more neighborhoods as we expand.
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -108,8 +161,22 @@ export default function ActivitiesClient({ activities }: Props) {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Browse Activities</h1>
         <p className="text-gray-500 text-sm">
-          {filtered.length} {neighborhood !== "all" ? `Upper West Side` : ""} activities
-          {neighborhood !== "all" && <span className="text-gray-400"> · <button onClick={() => setNeighborhood("all")} className="underline hover:text-gray-600">show all Manhattan</button></span>}
+          {filtered.length} {neighborhood !== "all" ? neighborhood : ""} activities
+          {search.trim() && (
+            <span className="text-gray-400"> matching “{search.trim()}”</span>
+          )}
+          {neighborhood !== "all" && (
+            <span className="text-gray-400">
+              {" "}
+              ·{" "}
+              <button
+                onClick={() => setNeighborhood("all")}
+                className="underline hover:text-gray-600"
+              >
+                show all Manhattan
+              </button>
+            </span>
+          )}
         </p>
       </div>
 
@@ -118,12 +185,23 @@ export default function ActivitiesClient({ activities }: Props) {
         <div className="relative flex-1 min-w-56">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
-            type="text"
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search activities, places, programs…"
-            className="w-full pl-9 pr-4 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400"
+            className="hero-search w-full pl-9 pr-10 py-2.5 rounded-full bg-white text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
+            aria-label="Search activities"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <select
@@ -229,7 +307,7 @@ export default function ActivitiesClient({ activities }: Props) {
               max={18}
               value={ageMin ?? ""}
               onChange={(e) =>
-                setAgeMin(e.target.value ? parseInt(e.target.value) : null)
+                setAgeMin(e.target.value ? parseInt(e.target.value, 10) : null)
               }
               placeholder="0"
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
@@ -246,7 +324,7 @@ export default function ActivitiesClient({ activities }: Props) {
               max={18}
               value={ageMax ?? ""}
               onChange={(e) =>
-                setAgeMax(e.target.value ? parseInt(e.target.value) : null)
+                setAgeMax(e.target.value ? parseInt(e.target.value, 10) : null)
               }
               placeholder="18"
               className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
@@ -287,7 +365,9 @@ export default function ActivitiesClient({ activities }: Props) {
         <div className="text-center py-16">
           <div className="text-5xl mb-3">🔍</div>
           <h3 className="text-lg font-semibold text-gray-700 mb-1">No activities found</h3>
-          <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Try a different search term or clear filters
+          </p>
           <button
             onClick={clearFilters}
             className="px-4 py-2 rounded-full bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
