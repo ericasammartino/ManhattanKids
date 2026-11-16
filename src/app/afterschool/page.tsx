@@ -15,7 +15,7 @@ export default function AfterschoolPage() {
       <ActivitiesClient
         activities={programs}
         title="Afterschool Programs"
-        subtitle="Enrichment classes, sports, STEM, arts, and more — starting on the UWS."
+        subtitle="Loaded from Manual Entry Session — enrichment classes, sports, STEM, arts, and more on the UWS."
         defaultType="Afterschool Program"
         emptyLabel="afterschool programs"
       />

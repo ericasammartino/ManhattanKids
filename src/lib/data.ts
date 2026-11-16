@@ -297,10 +297,18 @@ export function formatAgeRange(min: number | null, max: number | null): string {
 
 export function formatTime(time: string | null): string {
   if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
+  const trimmed = String(time).trim();
+  // Keep free-text times like "School dismissal" as-is.
+  if (!/^\d{1,2}:\d{2}(\s*[AaPp][Mm])?$/.test(trimmed)) return trimmed;
+  const [hRaw, mRaw] = trimmed.split(":");
+  const h = Number(hRaw);
+  const m = Number(mRaw.replace(/\D/g, ""));
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return trimmed;
   const ampm = h >= 12 ? "pm" : "am";
   const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, "0")}${ampm}`;
+  return m === 0
+    ? `${hour}${ampm}`
+    : `${hour}:${m.toString().padStart(2, "0")}${ampm}`;
 }
 
 export function formatDate(dateStr: string | null): string {
