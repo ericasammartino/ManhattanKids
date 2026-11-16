@@ -47,6 +47,8 @@ interface Props {
   title?: string;
   subtitle?: string;
   defaultType?: string;
+  /** When unset, neighborhood defaults to Upper West Side (browse-all pages). */
+  defaultNeighborhood?: string;
   emptyLabel?: string;
   /** Filters resolved on the server from the URL so first paint matches the query. */
   initialFilters: ActivityFilters;
@@ -87,6 +89,7 @@ export default function ActivitiesClient({
   title = "Browse Activities",
   subtitle,
   defaultType = "all",
+  defaultNeighborhood = "Upper West Side",
   emptyLabel = "activities",
   initialFilters,
 }: Props) {
@@ -158,13 +161,13 @@ export default function ActivitiesClient({
     }
     const fromUrl = resolveActivityFilters(
       Object.fromEntries(searchParams.entries()),
-      { defaultType }
+      { defaultType, defaultNeighborhood }
     );
     if (!sameFilters(fromUrl, filters)) {
       applyFiltersState(fromUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to URL changes
-  }, [searchParams, defaultType]);
+  }, [searchParams, defaultType, defaultNeighborhood]);
 
   useEffect(() => {
     return () => {

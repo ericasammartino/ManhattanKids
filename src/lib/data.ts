@@ -58,6 +58,72 @@ function nonempty(value: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
+/** Providers known to be UWS when the spreadsheet omits zip/address. */
+const KNOWN_UWS_ORG_NAMES = [
+  "discovery programs",
+  "funfit kids",
+  "central park tennis center",
+  "nyc elite gymnastics",
+  "robofun",
+  "zplayschool",
+  "supermud pottery",
+  "bloomingdale library",
+  "riverside library",
+  "goddard riverside",
+  "strycker",
+  "children’s aid",
+  "children's aid",
+  "west side ymca",
+  "elliott’s classes",
+  "elliott's classes",
+  "tim morehouse",
+  "writopia",
+  "marlene meyerson",
+];
+
+/** Infer UWS from street address text when zip is missing. */
+function neighborhoodFromAddress(address: string): string | null {
+  const a = address.toLowerCase();
+
+  // Explicit zip anywhere in the string
+  const zipMatch = a.match(/\b(100\d{2})\b/);
+  if (zipMatch && ZIP_TO_NEIGHBORHOOD[zipMatch[1]]) {
+    return ZIP_TO_NEIGHBORHOOD[zipMatch[1]];
+  }
+
+  // Classic UWS corridors
+  if (
+    /\bwest end ave/.test(a) ||
+    /\briverside (blvd|drive|dr)\b/.test(a) ||
+    /\bamsterdam ave/.test(a) ||
+    /\bcolumbus ave/.test(a) ||
+    /\bcentral park west\b/.test(a) ||
+    /\bcpw\b/.test(a)
+  ) {
+    return "Upper West Side";
+  }
+
+  // West ## Street / W ## St in the UWS band (roughly 59–110)
+  const westSt = a.match(/\b(?:w|west)\s*(\d{1,3})(?:st|nd|rd|th)?\s*(?:st|street)?\b/);
+  if (westSt) {
+    const n = Number(westSt[1]);
+    if (n >= 59 && n <= 110) return "Upper West Side";
+  }
+
+  // Bare "##th Street" with Broadway / west-side context
+  if (/\bbroadway\b/.test(a)) {
+    const st = a.match(/\b(\d{2,3})(?:st|nd|rd|th)?\s*(?:st|street)\b/);
+    if (st) {
+      const n = Number(st[1]);
+      if (n >= 59 && n <= 110) return "Upper West Side";
+    }
+    // Broadway alone with no street — often UWS in this dataset
+    if (!/\beast\b/.test(a)) return "Upper West Side";
+  }
+
+  return null;
+}
+
 export function resolveNeighborhood(location?: Location | null): string | null {
   if (!location) return null;
   const explicit = nonempty(location["Neighborhood"]);
@@ -66,9 +132,18 @@ export function resolveNeighborhood(location?: Location | null): string | null {
   const zip = nonempty(location["Zip Code"]);
   if (zip && ZIP_TO_NEIGHBORHOOD[zip]) return ZIP_TO_NEIGHBORHOOD[zip];
 
+  const address = nonempty(location["Street Address"]);
+  if (address) {
+    const fromAddr = neighborhoodFromAddress(address);
+    if (fromAddr) return fromAddr;
+  }
+
   const name = nonempty(location["Location Name"])?.toLowerCase() ?? "";
   if (name.includes("upper west")) return "Upper West Side";
   if (name.includes("upper east")) return "Upper East Side";
+  if (KNOWN_UWS_ORG_NAMES.some((n) => name.includes(n))) {
+    return "Upper West Side";
+  }
 
   return null;
 }

@@ -10,8 +10,11 @@ type Props = {
 export default async function AfterschoolPage({ searchParams }: Props) {
   const params = await searchParams;
   const programs = getAfterschoolPrograms();
+  // Default to all Manhattan so programs without a zip in the spreadsheet
+  // are not hidden behind the Upper West Side filter on first visit.
   const initialFilters = resolveActivityFilters(params, {
     defaultType: "Afterschool Program",
+    defaultNeighborhood: "all",
   });
 
   return (
@@ -27,6 +30,7 @@ export default async function AfterschoolPage({ searchParams }: Props) {
         title="Afterschool Programs"
         subtitle="Loaded from Manual Entry Session — enrichment classes, sports, STEM, arts, and more on the UWS."
         defaultType="Afterschool Program"
+        defaultNeighborhood="all"
         emptyLabel="afterschool programs"
         initialFilters={initialFilters}
       />
