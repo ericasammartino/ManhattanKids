@@ -1,5 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { EnrichedActivity } from "@/types";
 import {
@@ -8,6 +15,10 @@ import {
   CATEGORY_ICONS,
   NEIGHBORHOODS,
 } from "@/lib/data";
+import {
+  resolveActivityFilters,
+  type ActivityFilters,
+} from "@/lib/activity-filters";
 import ActivityCard from "@/components/ActivityCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
@@ -37,15 +48,38 @@ interface Props {
   subtitle?: string;
   defaultType?: string;
   emptyLabel?: string;
+  /** Filters resolved on the server from the URL so first paint matches the query. */
+  initialFilters: ActivityFilters;
 }
 
-function defaultNeighborhood(searchParams: URLSearchParams): string {
-  const fromUrl = searchParams.get("neighborhood");
-  if (fromUrl) return fromUrl;
-  // A search from the hero (or a shared link) should look citywide unless a
-  // neighborhood was explicitly chosen.
-  if (searchParams.get("search")) return "all";
-  return "Upper West Side";
+function buildQuery(filters: ActivityFilters): string {
+  const params = new URLSearchParams();
+  if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.category !== "all") params.set("category", filters.category);
+  if (filters.neighborhood !== "all") {
+    params.set("neighborhood", filters.neighborhood);
+  } else if (filters.search.trim()) {
+    params.set("neighborhood", "all");
+  }
+  if (filters.activityType !== "all") params.set("type", filters.activityType);
+  if (filters.schedulePattern !== "all") {
+    params.set("schedule", filters.schedulePattern);
+  }
+  if (filters.ageMin !== null) params.set("ageMin", String(filters.ageMin));
+  if (filters.ageMax !== null) params.set("ageMax", String(filters.ageMax));
+  return params.toString();
+}
+
+function sameFilters(a: ActivityFilters, b: ActivityFilters): boolean {
+  return (
+    a.search === b.search &&
+    a.category === b.category &&
+    a.neighborhood === b.neighborhood &&
+    a.activityType === b.activityType &&
+    a.schedulePattern === b.schedulePattern &&
+    a.ageMin === b.ageMin &&
+    a.ageMax === b.ageMax
+  );
 }
 
 export default function ActivitiesClient({
@@ -54,70 +88,114 @@ export default function ActivitiesClient({
   subtitle,
   defaultType = "all",
   emptyLabel = "activities",
+  initialFilters,
 }: Props) {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const skipUrlSync = useRef(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "all");
-  const [neighborhood, setNeighborhood] = useState(() =>
-    defaultNeighborhood(searchParams)
-  );
-  const [activityType, setActivityType] = useState(
-    searchParams.get("type") ?? defaultType
-  );
+  const [search, setSearch] = useState(initialFilters.search);
+  const [category, setCategory] = useState(initialFilters.category);
+  const [neighborhood, setNeighborhood] = useState(initialFilters.neighborhood);
+  const [activityType, setActivityType] = useState(initialFilters.activityType);
   const [schedulePattern, setSchedulePattern] = useState(
-    searchParams.get("schedule") ?? "all"
+    initialFilters.schedulePattern
   );
-  const [ageMin, setAgeMin] = useState<number | null>(() => {
-    const v = searchParams.get("ageMin");
-    return v ? parseInt(v, 10) : null;
-  });
-  const [ageMax, setAgeMax] = useState<number | null>(() => {
-    const v = searchParams.get("ageMax");
-    return v ? parseInt(v, 10) : null;
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  const [ageMin, setAgeMin] = useState<number | null>(initialFilters.ageMin);
+  const [ageMax, setAgeMax] = useState<number | null>(initialFilters.ageMax);
+  const [showFilters, setShowFilters] = useState(
+    initialFilters.schedulePattern !== "all" ||
+      initialFilters.ageMin !== null ||
+      initialFilters.ageMax !== null ||
+      (initialFilters.activityType !== "all" &&
+        initialFilters.activityType !== defaultType)
+  );
 
-  // Keep the address bar in sync so searches/filters are shareable.
+  const filters: ActivityFilters = useMemo(
+    () => ({
+      search,
+      category,
+      neighborhood,
+      activityType,
+      schedulePattern,
+      ageMin,
+      ageMax,
+    }),
+    [search, category, neighborhood, activityType, schedulePattern, ageMin, ageMax]
+  );
+
+  const applyFiltersState = useCallback((next: ActivityFilters) => {
+    setSearch(next.search);
+    setCategory(next.category);
+    setNeighborhood(next.neighborhood);
+    setActivityType(next.activityType);
+    setSchedulePattern(next.schedulePattern);
+    setAgeMin(next.ageMin);
+    setAgeMax(next.ageMax);
+  }, []);
+
+  const writeUrl = useCallback(
+    (next: ActivityFilters) => {
+      const qs = buildQuery(next);
+      const current = searchParams.toString();
+      if (qs === current) return;
+      skipUrlSync.current = true;
+      startTransition(() => {
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
+  // Browser back/forward or inbound links → sync URL into local state.
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set("search", search.trim());
-    if (category !== "all") params.set("category", category);
-    if (neighborhood !== "all") params.set("neighborhood", neighborhood);
-    if (activityType !== "all") params.set("type", activityType);
-    if (schedulePattern !== "all") params.set("schedule", schedulePattern);
-    if (ageMin !== null) params.set("ageMin", String(ageMin));
-    if (ageMax !== null) params.set("ageMax", String(ageMax));
-
-    const next = params.toString();
-    const current = searchParams.toString();
-    if (next !== current) {
-      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+    if (skipUrlSync.current) {
+      skipUrlSync.current = false;
+      return;
     }
-  }, [
-    search,
-    category,
-    neighborhood,
-    activityType,
-    schedulePattern,
-    ageMin,
-    ageMax,
-    pathname,
-    router,
-    searchParams,
-  ]);
+    const fromUrl = resolveActivityFilters(
+      Object.fromEntries(searchParams.entries()),
+      { defaultType }
+    );
+    if (!sameFilters(fromUrl, filters)) {
+      applyFiltersState(fromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to URL changes
+  }, [searchParams, defaultType]);
 
-  const filtered = filterActivities(activities, {
-    search,
-    category,
-    neighborhood,
-    activityType,
-    schedulePattern,
-    ageMin,
-    ageMax,
-  });
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
+
+  const update = useCallback(
+    (patch: Partial<ActivityFilters>, options?: { debounceSearch?: boolean }) => {
+      const next = { ...filters, ...patch };
+      if (patch.search !== undefined) setSearch(patch.search);
+      if (patch.category !== undefined) setCategory(patch.category);
+      if (patch.neighborhood !== undefined) setNeighborhood(patch.neighborhood);
+      if (patch.activityType !== undefined) setActivityType(patch.activityType);
+      if (patch.schedulePattern !== undefined) {
+        setSchedulePattern(patch.schedulePattern);
+      }
+      if (patch.ageMin !== undefined) setAgeMin(patch.ageMin);
+      if (patch.ageMax !== undefined) setAgeMax(patch.ageMax);
+
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+      if (options?.debounceSearch && patch.search !== undefined) {
+        searchTimer.current = setTimeout(() => writeUrl(next), 250);
+        return;
+      }
+      writeUrl(next);
+    },
+    [filters, writeUrl]
+  );
+
+  const filtered = filterActivities(activities, filters);
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
@@ -129,23 +207,31 @@ export default function ActivitiesClient({
     ageMax !== null;
 
   const clearFilters = () => {
-    setSearch("");
-    setCategory("all");
-    setNeighborhood("all");
-    setActivityType(defaultType);
-    setSchedulePattern("all");
-    setAgeMin(null);
-    setAgeMax(null);
+    const cleared: ActivityFilters = {
+      search: "",
+      category: "all",
+      neighborhood: "all",
+      activityType: defaultType,
+      schedulePattern: "all",
+      ageMin: null,
+      ageMax: null,
+    };
+    applyFiltersState(cleared);
+    writeUrl(cleared);
   };
 
   const isAfterschoolTab = defaultType === "Afterschool Program";
-
   const neighborhoodLabel =
     neighborhood === "all" ? "Manhattan" : neighborhood;
 
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    writeUrl(filters);
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Neighborhood banner */}
+    <div className={`max-w-6xl mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}>
       <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="font-semibold text-green-900 text-sm">
@@ -159,10 +245,11 @@ export default function ActivitiesClient({
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["Upper West Side", "all"].map((n) => (
+          {(["Upper West Side", "all"] as const).map((n) => (
             <button
               key={n}
-              onClick={() => setNeighborhood(n)}
+              type="button"
+              onClick={() => update({ neighborhood: n })}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 neighborhood === n
                   ? "bg-green-700 text-white"
@@ -188,7 +275,8 @@ export default function ActivitiesClient({
               {" "}
               ·{" "}
               <button
-                onClick={() => setNeighborhood("all")}
+                type="button"
+                onClick={() => update({ neighborhood: "all" })}
                 className="underline hover:text-gray-600"
               >
                 show all Manhattan
@@ -198,26 +286,39 @@ export default function ActivitiesClient({
         </p>
       </div>
 
-      {/* Search + Filter bar */}
-      <div className="flex gap-3 mb-5 flex-wrap">
+      <form
+        method="get"
+        action={pathname}
+        onSubmit={onFormSubmit}
+        className="flex gap-3 mb-5 flex-wrap"
+        role="search"
+      >
         <div className="relative flex-1 min-w-56">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="search"
+            name="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              update({ search: e.target.value }, { debounceSearch: true })
+            }
             placeholder={
               isAfterschoolTab
                 ? "Search afterschool programs…"
                 : "Search activities, places, programs…"
             }
             className="hero-search w-full pl-9 pr-10 py-2.5 rounded-full bg-white text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
-            aria-label={isAfterschoolTab ? "Search afterschool programs" : "Search activities"}
+            aria-label={
+              isAfterschoolTab
+                ? "Search afterschool programs"
+                : "Search activities"
+            }
+            autoComplete="off"
           />
           {search && (
             <button
               type="button"
-              onClick={() => setSearch("")}
+              onClick={() => update({ search: "" })}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               aria-label="Clear search"
             >
@@ -227,8 +328,10 @@ export default function ActivitiesClient({
         </div>
 
         <select
+          name="category"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => update({ category: e.target.value })}
+          aria-label="Category"
           className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
         >
           <option value="all">All Categories</option>
@@ -240,8 +343,10 @@ export default function ActivitiesClient({
         </select>
 
         <select
+          name="neighborhood"
           value={neighborhood}
-          onChange={(e) => setNeighborhood(e.target.value)}
+          onChange={(e) => update({ neighborhood: e.target.value })}
+          aria-label="Neighborhood"
           className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
         >
           <option value="all">All Neighborhoods</option>
@@ -253,6 +358,7 @@ export default function ActivitiesClient({
         </select>
 
         <button
+          type="button"
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
             showFilters || hasActiveFilters
@@ -271,6 +377,7 @@ export default function ActivitiesClient({
 
         {hasActiveFilters && (
           <button
+            type="button"
             onClick={clearFilters}
             className="flex items-center gap-1 px-3 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 text-sm hover:bg-red-100 transition-colors"
           >
@@ -278,87 +385,98 @@ export default function ActivitiesClient({
             Clear
           </button>
         )}
-      </div>
 
-      {/* Expanded filters */}
-      {showFilters && (
-        <div className="mb-6 p-4 rounded-2xl border border-gray-200 bg-white grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-              Activity Type
-            </label>
-            <select
-              value={activityType}
-              onChange={(e) => setActivityType(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-            >
-              <option value="all">Any Type</option>
-              {ACTIVITY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+        {isAfterschoolTab && !showFilters && (
+          <input type="hidden" name="type" value={activityType} />
+        )}
+
+        {showFilters && (
+          <div className="w-full p-4 rounded-2xl border border-gray-200 bg-white grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Activity Type
+              </label>
+              <select
+                name="type"
+                value={activityType}
+                onChange={(e) => update({ activityType: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+              >
+                <option value="all">Any Type</option>
+                {ACTIVITY_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Schedule
+              </label>
+              <select
+                name="schedule"
+                value={schedulePattern}
+                onChange={(e) => update({ schedulePattern: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+              >
+                <option value="all">Any Schedule</option>
+                {SCHEDULE_PATTERNS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Min Age
+              </label>
+              <input
+                type="number"
+                name="ageMin"
+                min={0}
+                max={18}
+                value={ageMin ?? ""}
+                onChange={(e) =>
+                  update({
+                    ageMin: e.target.value ? parseInt(e.target.value, 10) : null,
+                  })
+                }
+                placeholder="0"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Max Age
+              </label>
+              <input
+                type="number"
+                name="ageMax"
+                min={0}
+                max={18}
+                value={ageMax ?? ""}
+                onChange={(e) =>
+                  update({
+                    ageMax: e.target.value ? parseInt(e.target.value, 10) : null,
+                  })
+                }
+                placeholder="18"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+              />
+            </div>
           </div>
+        )}
+      </form>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-              Schedule
-            </label>
-            <select
-              value={schedulePattern}
-              onChange={(e) => setSchedulePattern(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-            >
-              <option value="all">Any Schedule</option>
-              {SCHEDULE_PATTERNS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-              Min Age
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={18}
-              value={ageMin ?? ""}
-              onChange={(e) =>
-                setAgeMin(e.target.value ? parseInt(e.target.value, 10) : null)
-              }
-              placeholder="0"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-              Max Age
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={18}
-              value={ageMax ?? ""}
-              onChange={(e) =>
-                setAgeMax(e.target.value ? parseInt(e.target.value, 10) : null)
-              }
-              placeholder="18"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Category pills */}
       <div className="flex flex-wrap gap-2 mb-6">
         <button
-          onClick={() => setCategory("all")}
+          type="button"
+          onClick={() => update({ category: "all" })}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             category === "all"
               ? "bg-gray-900 text-white"
@@ -370,7 +488,8 @@ export default function ActivitiesClient({
         {CATEGORIES.map((c) => (
           <button
             key={c}
-            onClick={() => setCategory(category === c ? "all" : c)}
+            type="button"
+            onClick={() => update({ category: category === c ? "all" : c })}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               category === c
                 ? "bg-gray-900 text-white"
@@ -382,15 +501,17 @@ export default function ActivitiesClient({
         ))}
       </div>
 
-      {/* Results grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-5xl mb-3">🔍</div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">No activities found</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-1">
+            No activities found
+          </h3>
           <p className="text-sm text-gray-500 mb-4">
             Try a different search term or clear filters
           </p>
           <button
+            type="button"
             onClick={clearFilters}
             className="px-4 py-2 rounded-full bg-green-700 text-white text-sm font-semibold hover:bg-green-800 transition-colors"
           >
@@ -400,10 +521,15 @@ export default function ActivitiesClient({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((activity) => (
-            <ActivityCard key={activity["Activity ID"]} activity={activity} />
+            <ActivityCard
+              key={activity["Activity ID"]}
+              activity={activity}
+            />
           ))}
         </div>
       )}
     </div>
   );
 }
+
+export type { ActivityFilters };

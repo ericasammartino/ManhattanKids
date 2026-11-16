@@ -39,8 +39,8 @@ export default function Home() {
               The Best Kids&apos; Activities on the UWS
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted md:text-base">
-              Classes, camps, museums, events and more. All in one place for NYC
-              families.
+              Starting with afterschool: enrichment classes, sports, STEM, arts,
+              and more for UWS families.
             </p>
             <div className="mt-7">
               <SearchBar />
