@@ -88,6 +88,57 @@ function parseZip(address: string | null): string | null {
   return m ? m[1] : null;
 }
 
+/** Best-effort UWS tag when the sheet omits Neighborhood/zip. */
+function inferNeighborhood(
+  address: string | null,
+  orgName: string
+): string | null {
+  const zip = parseZip(address);
+  if (zip && ["10023", "10024", "10025", "10069"].includes(zip)) {
+    return "Upper West Side";
+  }
+  const a = (address ?? "").toLowerCase();
+  if (
+    /\bwest end ave/.test(a) ||
+    /\briverside (blvd|drive|dr)\b/.test(a) ||
+    /\bamsterdam ave/.test(a) ||
+    /\bcolumbus ave/.test(a) ||
+    /\bcentral park west\b/.test(a) ||
+    /\bbroadway\b/.test(a)
+  ) {
+    return "Upper West Side";
+  }
+  const westSt = a.match(/\b(?:w|west)\s*(\d{1,3})/);
+  if (westSt) {
+    const n = Number(westSt[1]);
+    if (n >= 59 && n <= 110) return "Upper West Side";
+  }
+  const name = orgName.toLowerCase();
+  if (
+    name.includes("upper west") ||
+    name.includes("discovery programs") ||
+    name.includes("funfit") ||
+    name.includes("central park tennis") ||
+    name.includes("nyc elite") ||
+    name.includes("robofun") ||
+    name.includes("zplay") ||
+    name.includes("goddard") ||
+    name.includes("bloomingdale") ||
+    name.includes("riverside library") ||
+    name.includes("supermud") ||
+    name.includes("west side ymca") ||
+    name.includes("writopia") ||
+    name.includes("strycker") ||
+    name.includes("children") ||
+    name.includes("elliott") ||
+    name.includes("tim morehouse") ||
+    name.includes("marlene meyerson")
+  ) {
+    return "Upper West Side";
+  }
+  return null;
+}
+
 function pad(n: number, width = 4): string {
   return String(n).padStart(width, "0");
 }
@@ -211,7 +262,7 @@ async function main() {
         Description: null,
         "Street Address": address,
         "Address Line 2": null,
-        Neighborhood: null, // inferred later from zip in data.ts
+        Neighborhood: inferNeighborhood(address, orgName),
         Borough: "Manhattan",
         "Zip Code": zip,
         Latitude: null,
