@@ -97,6 +97,14 @@ export default function SearchBar({ variant = "hero" }: Props) {
         </button>
         <button
           type="button"
+          onClick={() => router.push("/afterschool")}
+          className="filter-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm"
+        >
+          afterschool
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+        </button>
+        <button
+          type="button"
           onClick={() => go({})}
           className="filter-chip inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm"
         >

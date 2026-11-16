@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getEnrichedActivities } from "@/lib/data";
+import { getEnrichedActivities, getAfterschoolPrograms } from "@/lib/data";
 import ActivityCard from "@/components/ActivityCard";
 import SearchBar from "@/components/SearchBar";
 import InterestOrbs from "@/components/InterestOrbs";
 
 export default function Home() {
   const allActivities = getEnrichedActivities();
+  const afterschool = getAfterschoolPrograms();
 
   const uwsActivities = allActivities.filter(
     (a) => a.location?.["Neighborhood"] === "Upper West Side"
@@ -22,9 +23,15 @@ export default function Home() {
     )
     .slice(0, 4);
 
+  const afterschoolPreview = (
+    afterschool.filter((a) => a.location?.["Neighborhood"] === "Upper West Side")
+      .length > 0
+      ? afterschool.filter((a) => a.location?.["Neighborhood"] === "Upper West Side")
+      : afterschool
+  ).slice(0, 4);
+
   return (
     <div>
-      {/* Hero — matches design: copy + search left, UWS map right */}
       <section className="mx-auto max-w-6xl px-4 pb-10 pt-10 md:px-6 md:pb-14 md:pt-14">
         <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:gap-12">
           <div className="animate-fade-up">
@@ -56,7 +63,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Explore by Interest */}
       <section className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
         <h2 className="mb-7 text-xl font-extrabold tracking-tight text-foreground md:text-2xl">
           Explore by Interest
@@ -64,7 +70,31 @@ export default function Home() {
         <InterestOrbs />
       </section>
 
-      {/* Highlights */}
+      {afterschoolPreview.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-extrabold tracking-tight text-foreground">
+              Afterschool Programs
+            </h2>
+            <Link
+              href="/afterschool"
+              className="text-sm text-muted transition-colors hover:text-foreground"
+            >
+              view afterschool tab →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {afterschoolPreview.map((activity) => (
+              <ActivityCard
+                key={activity["Activity ID"]}
+                activity={activity}
+                variant="compact"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {highlights.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
           <div className="mb-5 flex items-center justify-between">
@@ -90,7 +120,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Fall Favorites */}
       <section className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
         <h2 className="mb-5 text-xl font-extrabold tracking-tight text-foreground">
           Fall Favorites
@@ -109,51 +138,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Type shortcuts */}
-      <section className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {[
-            {
-              href: "/activities?type=Afterschool+Program&neighborhood=all",
-              title: "Afterschool Programs",
-              desc: "Regular enrichment classes and programs for school-age kids.",
-              emoji: "🏫",
-            },
-            {
-              href: "/activities?type=Camp&neighborhood=all",
-              title: "Camps & Workshops",
-              desc: "Day camps, weekend workshops, and intensive programs.",
-              emoji: "⛺",
-            },
-            {
-              href: "/activities?type=Event&neighborhood=all",
-              title: "Upcoming Events",
-              desc: "One-time events, performances, and special programming.",
-              emoji: "🎉",
-            },
-            {
-              href: "/activities?type=Drop-in&neighborhood=all",
-              title: "Drop-in Activities",
-              desc: "No registration required — just show up and play.",
-              emoji: "🚶",
-            },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group rounded-2xl border border-border/80 bg-surface p-6 transition-all hover:border-accent/40 hover:shadow-sm"
-            >
-              <div className="mb-2 text-3xl">{item.emoji}</div>
-              <h3 className="mb-1 text-lg font-bold text-foreground group-hover:text-accent">
-                {item.title}
-              </h3>
-              <p className="text-sm text-muted">{item.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 pb-16 md:px-6">
         <div className="rounded-3xl bg-foreground px-8 py-10 text-center text-white">
           <h2 className="mb-2 text-2xl font-extrabold">Know of a great activity?</h2>

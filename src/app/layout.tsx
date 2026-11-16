@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Manhattan Kids Activities",
   description:
-    "Classes, camps, museums, events and more. All in one place for NYC families.",
+    "Classes, camps, afterschool programs, museums, and events for NYC families — starting on the Upper West Side.",
 };
 
 export default function RootLayout({

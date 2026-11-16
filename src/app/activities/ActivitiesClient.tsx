@@ -33,6 +33,10 @@ const SCHEDULE_PATTERNS = [
 
 interface Props {
   activities: EnrichedActivity[];
+  title?: string;
+  subtitle?: string;
+  defaultType?: string;
+  emptyLabel?: string;
 }
 
 function defaultNeighborhood(searchParams: URLSearchParams): string {
@@ -44,7 +48,13 @@ function defaultNeighborhood(searchParams: URLSearchParams): string {
   return "Upper West Side";
 }
 
-export default function ActivitiesClient({ activities }: Props) {
+export default function ActivitiesClient({
+  activities,
+  title = "Browse Activities",
+  subtitle,
+  defaultType = "all",
+  emptyLabel = "activities",
+}: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -54,7 +64,9 @@ export default function ActivitiesClient({ activities }: Props) {
   const [neighborhood, setNeighborhood] = useState(() =>
     defaultNeighborhood(searchParams)
   );
-  const [activityType, setActivityType] = useState(searchParams.get("type") ?? "all");
+  const [activityType, setActivityType] = useState(
+    searchParams.get("type") ?? defaultType
+  );
   const [schedulePattern, setSchedulePattern] = useState(
     searchParams.get("schedule") ?? "all"
   );
@@ -111,7 +123,7 @@ export default function ActivitiesClient({ activities }: Props) {
     Boolean(search.trim()) ||
     category !== "all" ||
     neighborhood !== "all" ||
-    activityType !== "all" ||
+    activityType !== defaultType ||
     schedulePattern !== "all" ||
     ageMin !== null ||
     ageMax !== null;
@@ -120,11 +132,13 @@ export default function ActivitiesClient({ activities }: Props) {
     setSearch("");
     setCategory("all");
     setNeighborhood("all");
-    setActivityType("all");
+    setActivityType(defaultType);
     setSchedulePattern("all");
     setAgeMin(null);
     setAgeMax(null);
   };
+
+  const isAfterschoolTab = defaultType === "Afterschool Program";
 
   const neighborhoodLabel =
     neighborhood === "all" ? "Manhattan" : neighborhood;
@@ -135,10 +149,13 @@ export default function ActivitiesClient({ activities }: Props) {
       <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="font-semibold text-green-900 text-sm">
-            Currently showing: {neighborhoodLabel}
+            {isAfterschoolTab
+              ? `Afterschool · ${neighborhoodLabel}`
+              : `Currently showing: ${neighborhoodLabel}`}
           </div>
           <div className="text-green-700 text-xs mt-0.5">
-            Starting with the Upper West Side — more neighborhoods as we expand.
+            {subtitle ??
+              "Starting with the Upper West Side — more neighborhoods as we expand."}
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -159,9 +176,10 @@ export default function ActivitiesClient({ activities }: Props) {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">Browse Activities</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">{title}</h1>
         <p className="text-gray-500 text-sm">
-          {filtered.length} {neighborhood !== "all" ? neighborhood : ""} activities
+          {filtered.length} {neighborhood !== "all" ? neighborhood : ""}{" "}
+          {emptyLabel}
           {search.trim() && (
             <span className="text-gray-400"> matching “{search.trim()}”</span>
           )}
@@ -188,9 +206,13 @@ export default function ActivitiesClient({ activities }: Props) {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search activities, places, programs…"
+            placeholder={
+              isAfterschoolTab
+                ? "Search afterschool programs…"
+                : "Search activities, places, programs…"
+            }
             className="hero-search w-full pl-9 pr-10 py-2.5 rounded-full bg-white text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
-            aria-label="Search activities"
+            aria-label={isAfterschoolTab ? "Search afterschool programs" : "Search activities"}
           />
           {search && (
             <button
