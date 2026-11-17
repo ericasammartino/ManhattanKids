@@ -7,6 +7,7 @@ import {
   PLACEHOLDER_IMAGES,
   resolveActivityImage,
 } from "@/lib/data";
+import { normalizePrimaryCategory } from "@/lib/taxonomy";
 import { MapPin, Clock, Calendar } from "lucide-react";
 import ActivityImage from "@/components/ActivityImage";
 
@@ -18,7 +19,8 @@ interface Props {
 export { PLACEHOLDER_IMAGES };
 
 export default function ActivityCard({ activity, variant = "default" }: Props) {
-  const category = activity["Primary Category"] ?? "default";
+  const category =
+    normalizePrimaryCategory(activity["Primary Category"]) ?? "default";
   const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const { src: imgSrc, isLogo } = resolveActivityImage(activity);

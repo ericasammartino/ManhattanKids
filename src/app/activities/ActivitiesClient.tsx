@@ -14,6 +14,8 @@ import {
   CATEGORIES,
   CATEGORY_ICONS,
   NEIGHBORHOODS,
+  SUBCATEGORY_OPTIONS,
+  DAY_OPTIONS,
 } from "@/lib/data";
 import {
   resolveActivityFilters,
@@ -42,6 +44,8 @@ const SCHEDULE_PATTERNS = [
   "Weekend",
 ];
 
+const AGE_SELECT_OPTIONS = Array.from({ length: 19 }, (_, age) => age);
+
 interface Props {
   activities: EnrichedActivity[];
   title?: string;
@@ -58,6 +62,9 @@ function buildQuery(filters: ActivityFilters): string {
   const params = new URLSearchParams();
   if (filters.search.trim()) params.set("search", filters.search.trim());
   if (filters.category !== "all") params.set("category", filters.category);
+  if (filters.subcategory !== "all") {
+    params.set("subcategory", filters.subcategory);
+  }
   if (filters.neighborhood !== "all") {
     params.set("neighborhood", filters.neighborhood);
   } else if (filters.search.trim()) {
@@ -67,8 +74,8 @@ function buildQuery(filters: ActivityFilters): string {
   if (filters.schedulePattern !== "all") {
     params.set("schedule", filters.schedulePattern);
   }
-  if (filters.ageMin !== null) params.set("ageMin", String(filters.ageMin));
-  if (filters.ageMax !== null) params.set("ageMax", String(filters.ageMax));
+  if (filters.day !== "all") params.set("day", filters.day);
+  if (filters.age !== null) params.set("age", String(filters.age));
   return params.toString();
 }
 
@@ -76,9 +83,12 @@ function sameFilters(a: ActivityFilters, b: ActivityFilters): boolean {
   return (
     a.search === b.search &&
     a.category === b.category &&
+    a.subcategory === b.subcategory &&
     a.neighborhood === b.neighborhood &&
     a.activityType === b.activityType &&
     a.schedulePattern === b.schedulePattern &&
+    a.day === b.day &&
+    a.age === b.age &&
     a.ageMin === b.ageMin &&
     a.ageMax === b.ageMax
   );
@@ -102,15 +112,21 @@ export default function ActivitiesClient({
 
   const [search, setSearch] = useState(initialFilters.search);
   const [category, setCategory] = useState(initialFilters.category);
+  const [subcategory, setSubcategory] = useState(initialFilters.subcategory);
   const [neighborhood, setNeighborhood] = useState(initialFilters.neighborhood);
   const [activityType, setActivityType] = useState(initialFilters.activityType);
   const [schedulePattern, setSchedulePattern] = useState(
     initialFilters.schedulePattern
   );
+  const [day, setDay] = useState(initialFilters.day);
+  const [age, setAge] = useState<number | null>(initialFilters.age);
   const [ageMin, setAgeMin] = useState<number | null>(initialFilters.ageMin);
   const [ageMax, setAgeMax] = useState<number | null>(initialFilters.ageMax);
   const [showFilters, setShowFilters] = useState(
     initialFilters.schedulePattern !== "all" ||
+      initialFilters.subcategory !== "all" ||
+      initialFilters.day !== "all" ||
+      initialFilters.age !== null ||
       initialFilters.ageMin !== null ||
       initialFilters.ageMax !== null ||
       (initialFilters.activityType !== "all" &&
@@ -121,21 +137,38 @@ export default function ActivitiesClient({
     () => ({
       search,
       category,
+      subcategory,
       neighborhood,
       activityType,
       schedulePattern,
+      day,
+      age,
       ageMin,
       ageMax,
     }),
-    [search, category, neighborhood, activityType, schedulePattern, ageMin, ageMax]
+    [
+      search,
+      category,
+      subcategory,
+      neighborhood,
+      activityType,
+      schedulePattern,
+      day,
+      age,
+      ageMin,
+      ageMax,
+    ]
   );
 
   const applyFiltersState = useCallback((next: ActivityFilters) => {
     setSearch(next.search);
     setCategory(next.category);
+    setSubcategory(next.subcategory);
     setNeighborhood(next.neighborhood);
     setActivityType(next.activityType);
     setSchedulePattern(next.schedulePattern);
+    setDay(next.day);
+    setAge(next.age);
     setAgeMin(next.ageMin);
     setAgeMax(next.ageMax);
   }, []);
@@ -180,10 +213,20 @@ export default function ActivitiesClient({
       const next = { ...filters, ...patch };
       if (patch.search !== undefined) setSearch(patch.search);
       if (patch.category !== undefined) setCategory(patch.category);
+      if (patch.subcategory !== undefined) setSubcategory(patch.subcategory);
       if (patch.neighborhood !== undefined) setNeighborhood(patch.neighborhood);
       if (patch.activityType !== undefined) setActivityType(patch.activityType);
       if (patch.schedulePattern !== undefined) {
         setSchedulePattern(patch.schedulePattern);
+      }
+      if (patch.day !== undefined) setDay(patch.day);
+      if (patch.age !== undefined) {
+        setAge(patch.age);
+        // Single-age mode clears legacy range params.
+        setAgeMin(null);
+        setAgeMax(null);
+        next.ageMin = null;
+        next.ageMax = null;
       }
       if (patch.ageMin !== undefined) setAgeMin(patch.ageMin);
       if (patch.ageMax !== undefined) setAgeMax(patch.ageMax);
@@ -203,9 +246,12 @@ export default function ActivitiesClient({
   const hasActiveFilters =
     Boolean(search.trim()) ||
     category !== "all" ||
+    subcategory !== "all" ||
     neighborhood !== "all" ||
     activityType !== defaultType ||
     schedulePattern !== "all" ||
+    day !== "all" ||
+    age !== null ||
     ageMin !== null ||
     ageMax !== null;
 
@@ -213,9 +259,12 @@ export default function ActivitiesClient({
     const cleared: ActivityFilters = {
       search: "",
       category: "all",
+      subcategory: "all",
       neighborhood: "all",
       activityType: defaultType,
       schedulePattern: "all",
+      day: "all",
+      age: null,
       ageMin: null,
       ageMax: null,
     };
@@ -346,6 +395,55 @@ export default function ActivitiesClient({
         </select>
 
         <select
+          name="subcategory"
+          value={subcategory}
+          onChange={(e) => update({ subcategory: e.target.value })}
+          aria-label="Subcategory"
+          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer max-w-[12rem]"
+        >
+          <option value="all">All Subcategories</option>
+          {SUBCATEGORY_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        <select
+          name="day"
+          value={day}
+          onChange={(e) => update({ day: e.target.value })}
+          aria-label="Day of the week"
+          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
+        >
+          <option value="all">Any Day</option>
+          {DAY_OPTIONS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+
+        <select
+          name="age"
+          value={age ?? ""}
+          onChange={(e) =>
+            update({
+              age: e.target.value ? parseInt(e.target.value, 10) : null,
+            })
+          }
+          aria-label="Child's age"
+          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
+        >
+          <option value="">Any Age</option>
+          {AGE_SELECT_OPTIONS.map((n) => (
+            <option key={n} value={n}>
+              {n === 0 ? "Under 1" : `Age ${n}`}
+            </option>
+          ))}
+        </select>
+
+        <select
           name="neighborhood"
           value={neighborhood}
           onChange={(e) => update({ neighborhood: e.target.value })}
@@ -435,42 +533,44 @@ export default function ActivitiesClient({
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Min Age
+                Child&apos;s age
               </label>
-              <input
-                type="number"
-                name="ageMin"
-                min={0}
-                max={18}
-                value={ageMin ?? ""}
+              <select
+                name="age"
+                value={age ?? ""}
                 onChange={(e) =>
                   update({
-                    ageMin: e.target.value ? parseInt(e.target.value, 10) : null,
+                    age: e.target.value ? parseInt(e.target.value, 10) : null,
                   })
                 }
-                placeholder="0"
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-              />
+              >
+                <option value="">Any age</option>
+                {AGE_SELECT_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n === 0 ? "Under 1" : `Age ${n}`}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Max Age
+                Day of week
               </label>
-              <input
-                type="number"
-                name="ageMax"
-                min={0}
-                max={18}
-                value={ageMax ?? ""}
-                onChange={(e) =>
-                  update({
-                    ageMax: e.target.value ? parseInt(e.target.value, 10) : null,
-                  })
-                }
-                placeholder="18"
+              <select
+                name="day"
+                value={day}
+                onChange={(e) => update({ day: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-              />
+              >
+                <option value="all">Any day</option>
+                {DAY_OPTIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         )}

@@ -2,7 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ArrowRight } from "lucide-react";
-import { CATEGORIES, CATEGORY_ICONS, NEIGHBORHOODS } from "@/lib/data";
+import {
+  CATEGORIES,
+  CATEGORY_ICONS,
+  NEIGHBORHOODS,
+  SUBCATEGORY_OPTIONS,
+  DAY_OPTIONS,
+} from "@/lib/data";
 
 type Props = {
   variant?: "hero" | "compact";
@@ -12,11 +18,10 @@ type Props = {
 
 const AGE_OPTIONS = [
   { label: "Any age", value: "" },
-  { label: "Ages 0–2", value: "0-2" },
-  { label: "Ages 3–5", value: "3-5" },
-  { label: "Ages 6–8", value: "6-8" },
-  { label: "Ages 9–12", value: "9-12" },
-  { label: "Ages 13–18", value: "13-18" },
+  ...Array.from({ length: 19 }, (_, age) => ({
+    label: age === 0 ? "Under 1" : `Age ${age}`,
+    value: String(age),
+  })),
 ];
 
 export default function SearchBar({
@@ -26,7 +31,9 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [neighborhood, setNeighborhood] = useState("all");
   const [category, setCategory] = useState("all");
-  const [ageRange, setAgeRange] = useState("");
+  const [subcategory, setSubcategory] = useState("all");
+  const [day, setDay] = useState("all");
+  const [age, setAge] = useState("");
   const router = useRouter();
 
   const buildParams = () => {
@@ -39,11 +46,11 @@ export default function SearchBar({
       params.set("neighborhood", "all");
     }
     if (category && category !== "all") params.set("category", category);
-    if (ageRange) {
-      const [min, max] = ageRange.split("-");
-      if (min) params.set("ageMin", min);
-      if (max) params.set("ageMax", max);
+    if (subcategory && subcategory !== "all") {
+      params.set("subcategory", subcategory);
     }
+    if (day && day !== "all") params.set("day", day);
+    if (age) params.set("age", age);
     return params;
   };
 
@@ -113,12 +120,11 @@ export default function SearchBar({
         {category !== "all" && (
           <input type="hidden" name="category" value={category} />
         )}
-        {ageRange && (
-          <>
-            <input type="hidden" name="ageMin" value={ageRange.split("-")[0]} />
-            <input type="hidden" name="ageMax" value={ageRange.split("-")[1]} />
-          </>
+        {subcategory !== "all" && (
+          <input type="hidden" name="subcategory" value={subcategory} />
         )}
+        {day !== "all" && <input type="hidden" name="day" value={day} />}
+        {age && <input type="hidden" name="age" value={age} />}
         <button
           type="submit"
           className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white transition-opacity hover:opacity-90"
@@ -132,14 +138,31 @@ export default function SearchBar({
         <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
           <span className="sr-only">Age</span>
           <select
-            value={ageRange}
-            onChange={(e) => setAgeRange(e.target.value)}
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
             className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1"
-            aria-label="Age range"
+            aria-label="Child's age"
           >
             {AGE_OPTIONS.map((o) => (
               <option key={o.value || "any"} value={o.value}>
                 {o.label === "Any age" ? "age" : o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Day</span>
+          <select
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1"
+            aria-label="Day of the week"
+          >
+            <option value="all">day</option>
+            {DAY_OPTIONS.map((d) => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </select>
@@ -157,6 +180,23 @@ export default function SearchBar({
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {CATEGORY_ICONS[c]} {c}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Subcategory</span>
+          <select
+            value={subcategory}
+            onChange={(e) => setSubcategory(e.target.value)}
+            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1 max-w-[11rem]"
+            aria-label="Subcategory"
+          >
+            <option value="all">subcategory</option>
+            {SUBCATEGORY_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </select>
