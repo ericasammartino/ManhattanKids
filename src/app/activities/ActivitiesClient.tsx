@@ -20,6 +20,7 @@ import {
   type ActivityFilters,
 } from "@/lib/activity-filters";
 import ActivityCard from "@/components/ActivityCard";
+import GroupedActivityCard from "@/components/GroupedActivityCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 const ACTIVITY_TYPES = [
@@ -52,6 +53,8 @@ interface Props {
   /** When unset, neighborhood defaults to Upper West Side (browse-all pages). */
   defaultNeighborhood?: string;
   emptyLabel?: string;
+  /** Group multi-session classes into expandable class-time cards. */
+  groupedCards?: boolean;
   /** Filters resolved on the server from the URL so first paint matches the query. */
   initialFilters: ActivityFilters;
 }
@@ -96,6 +99,7 @@ export default function ActivitiesClient({
   defaultType = "all",
   defaultNeighborhood = "all",
   emptyLabel = "activities",
+  groupedCards = false,
   initialFilters,
 }: Props) {
   const router = useRouter();
@@ -546,13 +550,26 @@ export default function ActivitiesClient({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((activity) => (
-            <ActivityCard
-              key={activity["Activity ID"]}
-              activity={activity}
-            />
-          ))}
+        <div
+          className={
+            groupedCards
+              ? "mx-auto grid max-w-3xl grid-cols-1 gap-4"
+              : "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          }
+        >
+          {filtered.map((activity) =>
+            groupedCards ? (
+              <GroupedActivityCard
+                key={activity["Activity ID"]}
+                activity={activity}
+              />
+            ) : (
+              <ActivityCard
+                key={activity["Activity ID"]}
+                activity={activity}
+              />
+            )
+          )}
         </div>
       )}
     </div>

@@ -69,19 +69,33 @@ function parseCost(value: unknown): number | null {
   return match ? Number(match[1]) : null;
 }
 
-/** "5:10 PM" → "17:10" */
+/** Excel serial fraction or "5:10 PM" / "17:10" → "17:10" */
 function to24h(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+
+  // Excel time serial (e.g. 0.75 = 18:00)
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const dayFraction = value % 1;
+    const totalMinutes = Math.round(dayFraction * 24 * 60);
+    const h = Math.floor(totalMinutes / 60) % 24;
+    const min = totalMinutes % 60;
+    return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+  }
+
   const s = text(value);
   if (!s) return null;
-  const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!m) {
-    // already 24h-ish
-    if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5, "0");
-    return s;
+
+  // Numeric string serial
+  if (/^0?\.\d+$/.test(s) || /^\d+\.\d+$/.test(s)) {
+    const n = Number(s);
+    if (Number.isFinite(n) && n >= 0 && n < 1.5) return to24h(n);
   }
+
+  const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!m) return s;
   let h = Number(m[1]);
   const min = m[2];
-  const ap = m[3].toUpperCase();
+  const ap = m[3]?.toUpperCase();
   if (ap === "PM" && h < 12) h += 12;
   if (ap === "AM" && h === 12) h = 0;
   return `${String(h).padStart(2, "0")}:${min}`;

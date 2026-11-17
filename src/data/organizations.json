@@ -4,15 +4,15 @@
     "Organization Name": "Marlene Meyerson JCC Manhattan",
     "Organization Type": "Afterschool Provider",
     "Description": null,
-    "Website": "https://www.mmjccm.org/children-families/school-age#programs",
+    "Website": null,
     "Contact Email": null,
     "Phone": null,
     "Logo URL": "/logos/marlene-meyerson-jcc.png",
     "Instagram URL": null,
     "Status": "Active",
-    "Source URL": "https://www.mmjccm.org/children-families/school-age#programs",
+    "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot supplied 2026-11-14",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -20,13 +20,13 @@
     "Organization Name": "Strycker’s Bay Neighborhood Council",
     "Organization Type": "Afterschool Provider",
     "Description": null,
-    "Website": "https://robhen.com/new-york/manhattan/dehostos-community-center/",
+    "Website": null,
     "Contact Email": null,
     "Phone": null,
     "Logo URL": null,
     "Instagram URL": null,
     "Status": "Active",
-    "Source URL": "https://robhen.com/new-york/manhattan/dehostos-community-center/",
+    "Source URL": null,
     "Last Verified": null,
     "Notes": null,
     "External ID": null
@@ -156,7 +156,7 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -172,7 +172,7 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -188,7 +188,7 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -196,15 +196,15 @@
     "Organization Name": "Tim Morehouse Fencing Club",
     "Organization Type": "Afterschool Provider",
     "Description": null,
-    "Website": "https://www.timmorehousefencing.com/nyc-west-side-104th-broadway",
+    "Website": null,
     "Contact Email": null,
     "Phone": null,
     "Logo URL": "/logos/tim-morehouse-fencing.jpg",
     "Instagram URL": null,
     "Status": "Active",
-    "Source URL": "https://www.timmorehousefencing.com/nyc-west-side-104th-broadway",
+    "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot + official location page",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -212,15 +212,15 @@
     "Organization Name": "NYC Elite Gymnastics",
     "Organization Type": "Afterschool Provider",
     "Description": null,
-    "Website": "https://nycelite.com/",
+    "Website": null,
     "Contact Email": null,
     "Phone": null,
     "Logo URL": "/logos/nyc-elite-gymnastics.jpg",
     "Instagram URL": null,
     "Status": "Active",
-    "Source URL": "https://nycelite.com/",
+    "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -228,15 +228,15 @@
     "Organization Name": "Elliott’s Classes",
     "Organization Type": "Afterschool Provider",
     "Description": null,
-    "Website": "https://www.elliottsclasses.com",
+    "Website": null,
     "Contact Email": null,
     "Phone": null,
     "Logo URL": null,
     "Instagram URL": null,
     "Status": "Active",
-    "Source URL": "https://www.elliottsclasses.com",
+    "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -252,7 +252,7 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -268,7 +268,7 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
     "External ID": null
   },
   {
@@ -284,7 +284,39 @@
     "Status": "Active",
     "Source URL": null,
     "Last Verified": null,
-    "Notes": "Screenshot",
+    "Notes": null,
+    "External ID": null
+  },
+  {
+    "Organization ID": "ORG-0019",
+    "Organization Name": "Harmony By Karate",
+    "Organization Type": "Afterschool Provider",
+    "Description": null,
+    "Website": null,
+    "Contact Email": null,
+    "Phone": null,
+    "Logo URL": null,
+    "Instagram URL": null,
+    "Status": "Active",
+    "Source URL": null,
+    "Last Verified": null,
+    "Notes": null,
+    "External ID": null
+  },
+  {
+    "Organization ID": "ORG-0020",
+    "Organization Name": "West Side YMCA",
+    "Organization Type": "Afterschool Provider",
+    "Description": null,
+    "Website": null,
+    "Contact Email": null,
+    "Phone": null,
+    "Logo URL": null,
+    "Instagram URL": null,
+    "Status": "Active",
+    "Source URL": null,
+    "Last Verified": null,
+    "Notes": null,
     "External ID": null
   }
 ]
