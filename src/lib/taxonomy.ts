@@ -1,7 +1,5 @@
 /**
- * Canonical search taxonomy from the Lists sheet / Categories–Subcategories
- * spreadsheet. Grayed Educational / Performances / Science are inactive in the
- * sheet; Science (+ Educational) stay filterable because Session data uses them.
+ * Canonical search taxonomy from Erica’s Categories / Subcategories lists.
  */
 
 export const PRIMARY_CATEGORIES = [
@@ -17,16 +15,23 @@ export const PRIMARY_CATEGORIES = [
 
 export type PrimaryCategory = (typeof PRIMARY_CATEGORIES)[number];
 
-/** Active (black) subcategories from the taxonomy sheet. */
+/** Updated subcategory list (screenshot + Lists sheet). */
 export const ACTIVE_SUBCATEGORIES = [
+  "Academic",
+  "Acting",
   "Arts & Crafts",
   "Attractions",
+  "Ballet",
+  "Basketball",
+  "Ceramics",
+  "Chess",
   "Coding",
-  "Collections",
   "Cooking & Baking",
   "Creative Writing",
   "Cultural Experiences",
   "Dance",
+  "Drama",
+  "Educational",
   "Fitness",
   "Gaming",
   "General Afterschool",
@@ -42,27 +47,29 @@ export const ACTIVE_SUBCATEGORIES = [
   "Museums",
   "Music",
   "Outdoor Activities",
+  "Painting",
   "Parks & Playgrounds",
   "Performing Arts",
   "Photography",
+  "Piano",
+  "Reading",
   "Robotics",
+  "Science",
+  "Sewing",
+  "Soccer",
   "Sports",
   "Swimming",
   "Technology",
+  "Tennis",
   "Test Prep",
   "Theater",
   "Tutoring",
   "Visual Arts",
+  "Writing",
+  "Yoga",
 ] as const;
 
-/** Grayed in the sheet but present in Manual Entry Session data. */
-export const LEGACY_SUBCATEGORIES_IN_DATA = ["Educational", "Science"] as const;
-
-/** Filter dropdown: active taxonomy + legacy-in-data grayed rows. */
-export const SUBCATEGORIES = [
-  ...ACTIVE_SUBCATEGORIES,
-  ...LEGACY_SUBCATEGORIES_IN_DATA,
-] as const;
+export const SUBCATEGORIES = [...ACTIVE_SUBCATEGORIES] as const;
 
 export const DAYS_OF_WEEK = [
   "Monday",
@@ -88,9 +95,24 @@ const CATEGORY_ALIASES: Record<string, string> = {
 /** Extra tokens in Session Subcategory that should match a taxonomy value. */
 const SUBCATEGORY_ALIASES: Record<string, string[]> = {
   "Creative Writing": ["Creative Writing", "Writing", "Essay Writing"],
+  Writing: ["Writing", "Creative Writing", "Essay Writing"],
   Language: ["Language", "Early Literacy", "Debate"],
   Gaming: ["Gaming", "Tabletop Role-Playing"],
-  Technology: ["Technology", "Gaming, Technology"],
+  Technology: ["Technology"],
+  Ballet: ["Ballet"],
+  Basketball: ["Basketball"],
+  Ceramics: ["Ceramics"],
+  Drama: ["Drama"],
+  Acting: ["Acting"],
+  Tennis: ["Tennis"],
+  Soccer: ["Soccer"],
+  Yoga: ["Yoga"],
+  Piano: ["Piano"],
+  Painting: ["Painting"],
+  Reading: ["Reading"],
+  Sewing: ["Sewing"],
+  Chess: ["Chess"],
+  Academic: ["Academic"],
 };
 
 export function normalizePrimaryCategory(
@@ -102,7 +124,23 @@ export function normalizePrimaryCategory(
   return CATEGORY_ALIASES[trimmed] ?? trimmed;
 }
 
-/** Split multi-tag subcategory strings ("Dance, Theater, Music"). */
+/** Prefer a specific subcategory over a broad companion tag like "Sports". */
+const BROAD_SUBCATEGORY_TAGS = new Set([
+  "Sports",
+  "Educational",
+  "Performing Arts",
+]);
+
+export function displaySubcategory(
+  raw: string | null | undefined
+): string | null {
+  const tokens = splitSubcategories(raw);
+  if (tokens.length === 0) return null;
+  const specific = tokens.find((t) => !BROAD_SUBCATEGORY_TAGS.has(t));
+  return specific ?? tokens[0];
+}
+
+/** Split multi-tag subcategory strings ("Swimming, Sports"). */
 export function splitSubcategories(
   value: string | null | undefined
 ): string[] {
@@ -129,7 +167,6 @@ export function activityMatchesSubcategory(
   const targets = subcategoryMatchTargets(selected);
   return tokens.some((token) => {
     if (targets.has(token)) return true;
-    // Also allow selected to appear inside a multi-word token list item
     return token
       .split(/[/,]/)
       .map((t) => t.trim())
@@ -149,7 +186,6 @@ export function parseDaysOfWeek(raw: string | null | undefined): string[] {
   const found = new Set<string>();
   const lower = text.toLowerCase();
 
-  // Ranges: Monday–Thursday or Monday-Friday
   const range = lower.match(
     /(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s*[–—-]\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i
   );
@@ -169,7 +205,6 @@ export function parseDaysOfWeek(raw: string | null | undefined): string[] {
     if (re.test(text)) found.add(day);
   }
 
-  // Abbreviations: Mon, Tue, Wed…
   const abbrev: Record<string, string> = {
     mon: "Monday",
     tue: "Tuesday",
@@ -199,4 +234,18 @@ export function sessionRunsOnDay(
   day: string
 ): boolean {
   return parseDaysOfWeek(daysRaw).includes(day);
+}
+
+/** Compact day span for cards: "Tuesday–Friday" or "Mon, Wed". */
+export function formatDayRange(days: string[]): string | null {
+  if (days.length === 0) return null;
+  const ordered = DAY_ORDER.filter((d) => days.includes(d));
+  if (ordered.length === 0) return null;
+  if (ordered.length === 1) return ordered[0];
+  const indexes = ordered.map((d) => DAY_ORDER.indexOf(d));
+  const contiguous = indexes.every(
+    (idx, i) => i === 0 || idx === indexes[i - 1] + 1
+  );
+  if (contiguous) return `${ordered[0]}–${ordered[ordered.length - 1]}`;
+  return ordered.join(", ");
 }

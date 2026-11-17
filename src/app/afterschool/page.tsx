@@ -32,6 +32,7 @@ export default async function AfterschoolPage({ searchParams }: Props) {
         defaultType="Afterschool Program"
         defaultNeighborhood="all"
         emptyLabel="afterschool programs"
+        groupedCards
         initialFilters={initialFilters}
       />
     </Suspense>
