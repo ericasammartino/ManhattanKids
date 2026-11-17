@@ -14,16 +14,21 @@ import * as path from "path";
 
 type Row = Record<string, unknown>;
 
+/** Canonical Primary Categories from Lists / taxonomy (pass-through). */
 const CATEGORY_MAP: Record<string, string> = {
-  "Sports & Movement": "Sports & Movement",
+  "Afterschool Care": "Afterschool Care",
   "Arts & Creativity": "Arts & Creativity",
-  "Learning & Enrichment": "Learning & Enrichment",
-  STEM: "STEM & Discovery",
-  "STEM & Discovery": "STEM & Discovery",
-  "Afterschool Care": "Learning & Enrichment",
-  "Play & Exploration": "Nature & Outdoors",
-  "Museums & Culture": "Museums & Culture",
   Entertainment: "Entertainment",
+  "Learning & Enrichment": "Learning & Enrichment",
+  "Museums & Culture": "Museums & Culture",
+  "Play & Exploration": "Play & Exploration",
+  "Sports & Movement": "Sports & Movement",
+  STEM: "STEM",
+  // Legacy aliases from earlier imports / UI labels
+  "STEM & Discovery": "STEM",
+  "Nature & Outdoors": "Play & Exploration",
+  "Events & Experiences": "Entertainment",
+  "Food & Cooking": "Arts & Creativity",
 };
 
 /** Keep in sync with src/data/org-logos.ts */

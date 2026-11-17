@@ -12,6 +12,14 @@ import type {
   IncomingActivity,
   EnrichedActivity,
 } from "@/types";
+import {
+  PRIMARY_CATEGORIES,
+  SUBCATEGORIES,
+  DAYS_OF_WEEK,
+  normalizePrimaryCategory,
+  activityMatchesSubcategory,
+  sessionRunsOnDay,
+} from "@/lib/taxonomy";
 
 /** Infer neighborhood when the spreadsheet left it blank (common after Sheets sync). */
 const ZIP_TO_NEIGHBORHOOD: Record<string, string> = {
@@ -179,24 +187,26 @@ export const getIncomingActivities = (): IncomingActivity[] =>
   incoming as unknown as IncomingActivity[];
 
 export const PLACEHOLDER_IMAGES: Record<string, string> = {
+  "Afterschool Care":
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop",
   "Arts & Creativity":
     "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=300&fit=crop",
   "Sports & Movement":
     "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=400&h=300&fit=crop",
+  STEM:
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
   "STEM & Discovery":
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
   "Museums & Culture":
     "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
-  "Events & Experiences":
-    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
   "Learning & Enrichment":
     "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop",
   Entertainment:
     "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=300&fit=crop",
+  "Play & Exploration":
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
   "Nature & Outdoors":
     "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
-  "Food & Cooking":
-    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop",
   default:
     "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
 };
@@ -214,7 +224,8 @@ export function resolveActivityImage(activity: EnrichedActivity): {
     logoForOrganization(activity.organization?.["Organization Name"]);
   if (logo) return { src: logo, isLogo: true };
 
-  const category = activity["Primary Category"] ?? "default";
+  const category =
+    normalizePrimaryCategory(activity["Primary Category"]) ?? "default";
   return {
     src: PLACEHOLDER_IMAGES[category] ?? PLACEHOLDER_IMAGES.default,
     isLogo: false,
@@ -300,40 +311,30 @@ export function getActivityById(id: string): EnrichedActivity | undefined {
   return getEnrichedActivities().find((a) => a["Activity ID"] === id);
 }
 
-export const CATEGORIES = [
-  "Arts & Creativity",
-  "Entertainment",
-  "Learning & Enrichment",
-  "Sports & Movement",
-  "STEM & Discovery",
-  "Museums & Culture",
-  "Events & Experiences",
-  "Nature & Outdoors",
-  "Food & Cooking",
-];
+export const CATEGORIES = [...PRIMARY_CATEGORIES];
+export const SUBCATEGORY_OPTIONS = [...SUBCATEGORIES];
+export const DAY_OPTIONS = [...DAYS_OF_WEEK];
 
 export const CATEGORY_COLORS: Record<string, string> = {
+  "Afterschool Care": "bg-sky-200 text-sky-800",
   "Arts & Creativity": "bg-rose-200 text-rose-800",
-  "Entertainment": "bg-purple-200 text-purple-800",
+  Entertainment: "bg-purple-200 text-purple-800",
   "Learning & Enrichment": "bg-blue-200 text-blue-800",
-  "Sports & Movement": "bg-yellow-200 text-yellow-800",
-  "STEM & Discovery": "bg-violet-200 text-violet-800",
   "Museums & Culture": "bg-teal-200 text-teal-800",
-  "Events & Experiences": "bg-green-200 text-green-800",
-  "Nature & Outdoors": "bg-lime-200 text-lime-800",
-  "Food & Cooking": "bg-orange-200 text-orange-800",
+  "Play & Exploration": "bg-lime-200 text-lime-800",
+  "Sports & Movement": "bg-yellow-200 text-yellow-800",
+  STEM: "bg-violet-200 text-violet-800",
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
+  "Afterschool Care": "🏫",
   "Arts & Creativity": "🎨",
-  "Entertainment": "🎭",
+  Entertainment: "🎭",
   "Learning & Enrichment": "📚",
-  "Sports & Movement": "⚽",
-  "STEM & Discovery": "🔬",
   "Museums & Culture": "🏛️",
-  "Events & Experiences": "🎪",
-  "Nature & Outdoors": "🌿",
-  "Food & Cooking": "🍳",
+  "Play & Exploration": "🌿",
+  "Sports & Movement": "⚽",
+  STEM: "🔬",
 };
 
 export const NEIGHBORHOODS = [
@@ -356,17 +357,59 @@ export const NEIGHBORHOODS = [
 export type FilterState = {
   search: string;
   category: string;
+  subcategory: string;
   neighborhood: string;
+  /** Child's age — program must include this age in [min, max] inclusive. */
+  age: number | null;
   ageMin: number | null;
   ageMax: number | null;
   activityType: string;
   schedulePattern: string;
+  day: string;
 };
 
 function asAge(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Effective age bounds: activity fields, else any session overrides. */
+function activityAgeBounds(activity: EnrichedActivity): {
+  min: number | null;
+  max: number | null;
+} {
+  let min = asAge(activity["Age Minimum"]);
+  let max = asAge(activity["Age Maximum"]);
+  if (min !== null || max !== null) return { min, max };
+
+  for (const session of activity.sessions ?? []) {
+    const sMin = asAge(session["Minimum Age Override"]);
+    const sMax = asAge(session["Maximum Age Override"]);
+    if (sMin !== null) min = min === null ? sMin : Math.min(min, sMin);
+    if (sMax !== null) max = max === null ? sMax : Math.max(max, sMax);
+  }
+  return { min, max };
+}
+
+function activityMatchesAge(
+  activity: EnrichedActivity,
+  age: number
+): boolean {
+  const { min, max } = activityAgeBounds(activity);
+  if (min === null && max === null) return false;
+  if (min !== null && age < min) return false;
+  if (max !== null && age > max) return false;
+  return true;
+}
+
+function activityRunsOnDay(
+  activity: EnrichedActivity,
+  day: string
+): boolean {
+  const sessions = activity.sessions ?? [];
+  if (sessions.length === 0) return false;
+  return sessions.some((s) => sessionRunsOnDay(s["Days of the Week"], day));
 }
 
 export function filterActivities(
@@ -379,8 +422,19 @@ export function filterActivities(
     }
 
     if (filters.category && filters.category !== "all") {
-      const cat = nonempty(activity["Primary Category"]);
+      const cat = normalizePrimaryCategory(activity["Primary Category"]);
       if (cat !== filters.category) return false;
+    }
+
+    if (filters.subcategory && filters.subcategory !== "all") {
+      if (
+        !activityMatchesSubcategory(
+          activity["Subcategory"],
+          filters.subcategory
+        )
+      ) {
+        return false;
+      }
     }
 
     if (filters.neighborhood && filters.neighborhood !== "all") {
@@ -390,14 +444,28 @@ export function filterActivities(
       if (neighborhood !== filters.neighborhood) return false;
     }
 
-    if (filters.ageMin !== null && filters.ageMin !== undefined) {
-      const ageMax = asAge(activity["Age Maximum"]);
-      if (ageMax !== null && ageMax < filters.ageMin) return false;
-    }
+    // Prefer explicit child's age (inclusive between program min/max).
+    const childAge =
+      filters.age !== null && filters.age !== undefined
+        ? filters.age
+        : filters.ageMin !== null &&
+            filters.ageMin !== undefined &&
+            (filters.ageMax === null || filters.ageMax === undefined)
+          ? filters.ageMin
+          : null;
 
-    if (filters.ageMax !== null && filters.ageMax !== undefined) {
-      const ageMin = asAge(activity["Age Minimum"]);
-      if (ageMin !== null && ageMin > filters.ageMax) return false;
+    if (childAge !== null) {
+      if (!activityMatchesAge(activity, childAge)) return false;
+    } else {
+      // Legacy range overlap (homepage used to send ageMin+ageMax buckets).
+      if (filters.ageMin !== null && filters.ageMin !== undefined) {
+        const { max } = activityAgeBounds(activity);
+        if (max !== null && max < filters.ageMin) return false;
+      }
+      if (filters.ageMax !== null && filters.ageMax !== undefined) {
+        const { min } = activityAgeBounds(activity);
+        if (min !== null && min > filters.ageMax) return false;
+      }
     }
 
     if (filters.activityType && filters.activityType !== "all") {
@@ -407,6 +475,10 @@ export function filterActivities(
     if (filters.schedulePattern && filters.schedulePattern !== "all") {
       if (nonempty(activity["Schedule Pattern"]) !== filters.schedulePattern)
         return false;
+    }
+
+    if (filters.day && filters.day !== "all") {
+      if (!activityRunsOnDay(activity, filters.day)) return false;
     }
 
     return true;
