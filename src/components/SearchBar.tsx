@@ -1,11 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, SlidersHorizontal, X } from "lucide-react";
 import {
   CATEGORIES,
-  CATEGORY_ICONS,
-  NEIGHBORHOODS,
   SUBCATEGORY_OPTIONS,
   DAY_OPTIONS,
 } from "@/lib/data";
@@ -17,34 +15,34 @@ type Props = {
 };
 
 const AGE_OPTIONS = [
-  { label: "Any age", value: "" },
+  { label: "age", value: "" },
   ...Array.from({ length: 19 }, (_, age) => ({
-    label: age === 0 ? "Under 1" : `Age ${age}`,
+    label: String(age),
     value: String(age),
   })),
 ];
+
+const chipSelectClass =
+  "bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none text-center w-full";
 
 export default function SearchBar({
   variant = "hero",
   resultsPath = "/afterschool",
 }: Props) {
   const [query, setQuery] = useState("");
-  const [neighborhood, setNeighborhood] = useState("all");
   const [category, setCategory] = useState("all");
   const [subcategory, setSubcategory] = useState("all");
   const [day, setDay] = useState("all");
   const [age, setAge] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
 
   const buildParams = () => {
     const params = new URLSearchParams();
     const trimmed = query.trim();
     if (trimmed) params.set("search", trimmed);
-    if (neighborhood && neighborhood !== "all") {
-      params.set("neighborhood", neighborhood);
-    } else {
-      params.set("neighborhood", "all");
-    }
+    // Always browse all neighborhoods — neighborhood UI removed.
+    params.set("neighborhood", "all");
     if (category && category !== "all") params.set("category", category);
     if (subcategory && subcategory !== "all") {
       params.set("subcategory", subcategory);
@@ -65,6 +63,12 @@ export default function SearchBar({
     go();
   };
 
+  const filtersActive =
+    category !== "all" ||
+    subcategory !== "all" ||
+    day !== "all" ||
+    Boolean(age);
+
   if (variant === "compact") {
     return (
       <form
@@ -75,14 +79,14 @@ export default function SearchBar({
         role="search"
       >
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/70" />
           <input
             type="search"
             name="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search afterschool programs…"
-            className="hero-search w-full rounded-full bg-white py-2.5 pl-9 pr-12 text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
+            className="hero-search w-full rounded-full py-2.5 pl-9 pr-12 text-sm placeholder:text-foreground/55 focus:outline-none"
             autoComplete="off"
           />
           <button
@@ -106,17 +110,17 @@ export default function SearchBar({
         className="relative"
         role="search"
       >
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-accent" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-foreground/70" />
         <input
           type="search"
           name="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search afterschool programs…"
-          className="hero-search w-full rounded-full bg-white py-3.5 pl-11 pr-14 text-[15px] text-foreground placeholder:text-muted/65 focus:outline-none"
+          className="hero-search w-full rounded-full py-3.5 pl-11 pr-14 text-[15px] placeholder:text-foreground/55 focus:outline-none"
           autoComplete="off"
         />
-        <input type="hidden" name="neighborhood" value={neighborhood} />
+        <input type="hidden" name="neighborhood" value="all" />
         {category !== "all" && (
           <input type="hidden" name="category" value={category} />
         )}
@@ -134,29 +138,29 @@ export default function SearchBar({
         </button>
       </form>
 
-      <div className="mt-3.5 flex flex-wrap gap-2">
-        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+      <div className="mt-3.5 flex flex-wrap justify-center gap-2">
+        <label className="filter-chip inline-flex min-w-[4.5rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
           <span className="sr-only">Age</span>
           <select
             value={age}
             onChange={(e) => setAge(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1"
+            className={chipSelectClass}
             aria-label="Child's age"
           >
             {AGE_OPTIONS.map((o) => (
               <option key={o.value || "any"} value={o.value}>
-                {o.label === "Any age" ? "age" : o.label}
+                {o.label}
               </option>
             ))}
           </select>
         </label>
 
-        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+        <label className="filter-chip inline-flex min-w-[5.5rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
           <span className="sr-only">Day</span>
           <select
             value={day}
             onChange={(e) => setDay(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1"
+            className={chipSelectClass}
             aria-label="Day of the week"
           >
             <option value="all">day</option>
@@ -168,52 +172,18 @@ export default function SearchBar({
           </select>
         </label>
 
-        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+        <label className="filter-chip inline-flex min-w-[7rem] max-w-[11rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
           <span className="sr-only">Category</span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1 max-w-[11rem]"
+            className={`${chipSelectClass} max-w-[10rem]`}
             aria-label="Category"
           >
             <option value="all">category</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {CATEGORY_ICONS[c]} {c}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
-          <span className="sr-only">Subcategory</span>
-          <select
-            value={subcategory}
-            onChange={(e) => setSubcategory(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1 max-w-[11rem]"
-            aria-label="Subcategory"
-          >
-            <option value="all">subcategory</option>
-            {SUBCATEGORY_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
-          <span className="sr-only">Neighborhood</span>
-          <select
-            value={neighborhood}
-            onChange={(e) => setNeighborhood(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none pr-1 max-w-[12rem]"
-            aria-label="Neighborhood"
-          >
-            <option value="all">all neighborhoods</option>
-            {NEIGHBORHOODS.map((n) => (
-              <option key={n} value={n}>
-                {n}
+                {c}
               </option>
             ))}
           </select>
@@ -221,12 +191,125 @@ export default function SearchBar({
 
         <button
           type="button"
+          onClick={() => setShowFilters((open) => !open)}
+          className={`filter-chip inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
+            showFilters || filtersActive ? "border-foreground/40 bg-white/80" : ""
+          }`}
+          aria-expanded={showFilters}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filters
+        </button>
+
+        <button
+          type="button"
           onClick={go}
-          className="filter-chip inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm"
+          className="filter-chip inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium"
         >
           search afterschool
         </button>
       </div>
+
+      {showFilters && (
+        <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-white/90 p-4 text-left shadow-sm sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
+              Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40"
+              aria-label="Category"
+            >
+              <option value="all">Any category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
+              Subcategory
+            </label>
+            <select
+              value={subcategory}
+              onChange={(e) => setSubcategory(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40"
+              aria-label="Subcategory"
+            >
+              <option value="all">Any subcategory</option>
+              {SUBCATEGORY_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
+              Day
+            </label>
+            <select
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40"
+              aria-label="Day of the week"
+            >
+              <option value="all">Any day</option>
+              {DAY_OPTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
+              Age
+            </label>
+            <select
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40"
+              aria-label="Child's age"
+            >
+              <option value="">Any</option>
+              {AGE_OPTIONS.filter((o) => o.value).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-2 flex justify-center gap-2 pt-1">
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory("all");
+                  setSubcategory("all");
+                  setDay("all");
+                  setAge("");
+                }}
+                className="inline-flex items-center justify-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-600"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear filters
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={go}
+              className="inline-flex items-center justify-center rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-white"
+            >
+              Apply filters
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

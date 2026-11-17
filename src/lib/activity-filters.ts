@@ -37,7 +37,7 @@ export function resolveActivityFilters(
     fromUrlNeighborhood ??
     (search
       ? "all"
-      : (options.defaultNeighborhood ?? "Upper West Side"));
+      : (options.defaultNeighborhood ?? "all"));
 
   const ageRaw = first(searchParams.age);
   const ageMinRaw = first(searchParams.ageMin);
