@@ -74,12 +74,20 @@ body {
 }
 
 .hero-search {
-  border: 1.5px solid var(--accent);
-  box-shadow: 0 0 0 4px rgba(217, 160, 75, 0.12);
+  border: 1.5px solid #e0a030;
+  background-color: #f6b346;
+  box-shadow: 0 0 0 4px rgba(246, 179, 70, 0.22);
+  color: var(--foreground);
 }
 
-.hero-search:focus-within {
-  box-shadow: 0 0 0 5px rgba(217, 160, 75, 0.2);
+.hero-search::placeholder {
+  color: rgba(45, 41, 62, 0.55);
+}
+
+.hero-search:focus-within,
+.hero-search:focus {
+  box-shadow: 0 0 0 5px rgba(246, 179, 70, 0.35);
+  outline: none;
 }
 
 .filter-chip {
@@ -87,6 +95,13 @@ body {
   background: transparent;
   color: var(--foreground);
   transition: border-color 0.15s ease, background-color 0.15s ease;
+  justify-content: center;
+  text-align: center;
+}
+
+.filter-chip select {
+  text-align: center;
+  text-align-last: center;
 }
 
 .filter-chip:hover {

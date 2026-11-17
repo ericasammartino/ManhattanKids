@@ -12,6 +12,7 @@ export default async function ActivitiesPage({ searchParams }: Props) {
   const activities = getEnrichedActivities();
   const initialFilters = resolveActivityFilters(params, {
     defaultType: "all",
+    defaultNeighborhood: "all",
   });
 
   return (

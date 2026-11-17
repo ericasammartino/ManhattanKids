@@ -12,8 +12,6 @@ import type { EnrichedActivity } from "@/types";
 import {
   filterActivities,
   CATEGORIES,
-  CATEGORY_ICONS,
-  NEIGHBORHOODS,
   SUBCATEGORY_OPTIONS,
   DAY_OPTIONS,
 } from "@/lib/data";
@@ -65,11 +63,8 @@ function buildQuery(filters: ActivityFilters): string {
   if (filters.subcategory !== "all") {
     params.set("subcategory", filters.subcategory);
   }
-  if (filters.neighborhood !== "all") {
-    params.set("neighborhood", filters.neighborhood);
-  } else if (filters.search.trim()) {
-    params.set("neighborhood", "all");
-  }
+  // Neighborhood UI removed — always browse all.
+  params.set("neighborhood", "all");
   if (filters.activityType !== "all") params.set("type", filters.activityType);
   if (filters.schedulePattern !== "all") {
     params.set("schedule", filters.schedulePattern);
@@ -99,7 +94,7 @@ export default function ActivitiesClient({
   title = "Browse Activities",
   subtitle,
   defaultType = "all",
-  defaultNeighborhood = "Upper West Side",
+  defaultNeighborhood = "all",
   emptyLabel = "activities",
   initialFilters,
 }: Props) {
@@ -194,8 +189,9 @@ export default function ActivitiesClient({
     }
     const fromUrl = resolveActivityFilters(
       Object.fromEntries(searchParams.entries()),
-      { defaultType, defaultNeighborhood }
+      { defaultType, defaultNeighborhood: "all" }
     );
+    fromUrl.neighborhood = "all";
     if (!sameFilters(fromUrl, filters)) {
       applyFiltersState(fromUrl);
     }
@@ -247,7 +243,6 @@ export default function ActivitiesClient({
     Boolean(search.trim()) ||
     category !== "all" ||
     subcategory !== "all" ||
-    neighborhood !== "all" ||
     activityType !== defaultType ||
     schedulePattern !== "all" ||
     day !== "all" ||
@@ -273,8 +268,6 @@ export default function ActivitiesClient({
   };
 
   const isAfterschoolTab = defaultType === "Afterschool Program";
-  const neighborhoodLabel =
-    neighborhood === "all" ? "Manhattan" : neighborhood;
 
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -282,58 +275,28 @@ export default function ActivitiesClient({
     writeUrl(filters);
   };
 
+  const filterSelectClass =
+    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40";
+
   return (
     <div className={`max-w-6xl mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}>
-      <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="font-semibold text-green-900 text-sm">
-            {isAfterschoolTab
-              ? `Afterschool · ${neighborhoodLabel}`
-              : `Currently showing: ${neighborhoodLabel}`}
+      {subtitle && (
+        <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100">
+          <div className="font-semibold text-green-900 text-sm text-center">
+            {isAfterschoolTab ? "Afterschool Programs" : title}
           </div>
-          <div className="text-green-700 text-xs mt-0.5">
-            {subtitle ??
-              "Starting with the Upper West Side — more neighborhoods as we expand."}
+          <div className="text-green-700 text-xs mt-0.5 text-center">
+            {subtitle}
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {(["Upper West Side", "all"] as const).map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => update({ neighborhood: n })}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                neighborhood === n
-                  ? "bg-green-700 text-white"
-                  : "bg-white text-green-700 border border-green-200 hover:bg-green-100"
-              }`}
-            >
-              {n === "all" ? "Show All Manhattan" : "Upper West Side Only"}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
-      <div className="mb-6">
+      <div className="mb-6 text-center sm:text-left">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">{title}</h1>
         <p className="text-gray-500 text-sm">
-          {filtered.length} {neighborhood !== "all" ? neighborhood : ""}{" "}
-          {emptyLabel}
+          {filtered.length} {emptyLabel}
           {search.trim() && (
             <span className="text-gray-400"> matching “{search.trim()}”</span>
-          )}
-          {neighborhood !== "all" && (
-            <span className="text-gray-400">
-              {" "}
-              ·{" "}
-              <button
-                type="button"
-                onClick={() => update({ neighborhood: "all" })}
-                className="underline hover:text-gray-600"
-              >
-                show all Manhattan
-              </button>
-            </span>
           )}
         </p>
       </div>
@@ -342,11 +305,11 @@ export default function ActivitiesClient({
         method="get"
         action={pathname}
         onSubmit={onFormSubmit}
-        className="flex gap-3 mb-5 flex-wrap"
+        className="mb-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start"
         role="search"
       >
-        <div className="relative flex-1 min-w-56">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="relative min-w-56 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/70" />
           <input
             type="search"
             name="search"
@@ -359,7 +322,7 @@ export default function ActivitiesClient({
                 ? "Search afterschool programs…"
                 : "Search activities, places, programs…"
             }
-            className="hero-search w-full pl-9 pr-10 py-2.5 rounded-full bg-white text-sm text-foreground placeholder:text-muted/70 focus:outline-none"
+            className="hero-search w-full rounded-full py-2.5 pl-9 pr-10 text-sm text-foreground placeholder:text-foreground/55 focus:outline-none"
             aria-label={
               isAfterschoolTab
                 ? "Search afterschool programs"
@@ -371,7 +334,7 @@ export default function ActivitiesClient({
             <button
               type="button"
               onClick={() => update({ search: "" })}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground"
               aria-label="Clear search"
             >
               <X className="w-4 h-4" />
@@ -379,98 +342,20 @@ export default function ActivitiesClient({
           )}
         </div>
 
-        <select
-          name="category"
-          value={category}
-          onChange={(e) => update({ category: e.target.value })}
-          aria-label="Category"
-          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
-        >
-          <option value="all">All Categories</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {CATEGORY_ICONS[c]} {c}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="subcategory"
-          value={subcategory}
-          onChange={(e) => update({ subcategory: e.target.value })}
-          aria-label="Subcategory"
-          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer max-w-[12rem]"
-        >
-          <option value="all">All Subcategories</option>
-          {SUBCATEGORY_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="day"
-          value={day}
-          onChange={(e) => update({ day: e.target.value })}
-          aria-label="Day of the week"
-          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
-        >
-          <option value="all">Any Day</option>
-          {DAY_OPTIONS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="age"
-          value={age ?? ""}
-          onChange={(e) =>
-            update({
-              age: e.target.value ? parseInt(e.target.value, 10) : null,
-            })
-          }
-          aria-label="Child's age"
-          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
-        >
-          <option value="">Any Age</option>
-          {AGE_SELECT_OPTIONS.map((n) => (
-            <option key={n} value={n}>
-              {n === 0 ? "Under 1" : `Age ${n}`}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="neighborhood"
-          value={neighborhood}
-          onChange={(e) => update({ neighborhood: e.target.value })}
-          aria-label="Neighborhood"
-          className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 cursor-pointer"
-        >
-          <option value="all">All Neighborhoods</option>
-          {NEIGHBORHOODS.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+          className={`filter-chip inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
             showFilters || hasActiveFilters
-              ? "border-green-400 bg-green-50 text-green-800"
-              : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              ? "border-foreground/40 bg-white"
+              : ""
           }`}
+          aria-expanded={showFilters}
         >
-          <SlidersHorizontal className="w-4 h-4" />
-          More Filters
+          <SlidersHorizontal className="h-4 w-4" />
+          Filters
           {hasActiveFilters && (
-            <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-xs text-white">
               !
             </span>
           )}
@@ -480,9 +365,9 @@ export default function ActivitiesClient({
           <button
             type="button"
             onClick={clearFilters}
-            className="flex items-center gap-1 px-3 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 text-sm hover:bg-red-100 transition-colors"
+            className="inline-flex items-center justify-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="h-3.5 w-3.5" />
             Clear
           </button>
         )}
@@ -490,40 +375,41 @@ export default function ActivitiesClient({
         {isAfterschoolTab && !showFilters && (
           <input type="hidden" name="type" value={activityType} />
         )}
+        <input type="hidden" name="neighborhood" value="all" />
 
         {showFilters && (
-          <div className="w-full p-4 rounded-2xl border border-gray-200 bg-white grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid w-full grid-cols-2 gap-4 rounded-2xl border border-gray-200 bg-white p-4 md:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Activity Type
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Category
               </label>
               <select
-                name="type"
-                value={activityType}
-                onChange={(e) => update({ activityType: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+                name="category"
+                value={category}
+                onChange={(e) => update({ category: e.target.value })}
+                className={filterSelectClass}
               >
-                <option value="all">Any Type</option>
-                {ACTIVITY_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                <option value="all">Any category</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Schedule
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Subcategory
               </label>
               <select
-                name="schedule"
-                value={schedulePattern}
-                onChange={(e) => update({ schedulePattern: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+                name="subcategory"
+                value={subcategory}
+                onChange={(e) => update({ subcategory: e.target.value })}
+                className={filterSelectClass}
               >
-                <option value="all">Any Schedule</option>
-                {SCHEDULE_PATTERNS.map((s) => (
+                <option value="all">Any subcategory</option>
+                {SUBCATEGORY_OPTIONS.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -532,37 +418,14 @@ export default function ActivitiesClient({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Child&apos;s age
-              </label>
-              <select
-                name="age"
-                value={age ?? ""}
-                onChange={(e) =>
-                  update({
-                    age: e.target.value ? parseInt(e.target.value, 10) : null,
-                  })
-                }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-              >
-                <option value="">Any age</option>
-                {AGE_SELECT_OPTIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n === 0 ? "Under 1" : `Age ${n}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                Day of week
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Day
               </label>
               <select
                 name="day"
                 value={day}
                 onChange={(e) => update({ day: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+                className={filterSelectClass}
               >
                 <option value="all">Any day</option>
                 {DAY_OPTIONS.map((d) => (
@@ -572,15 +435,76 @@ export default function ActivitiesClient({
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Age
+              </label>
+              <select
+                name="age"
+                value={age ?? ""}
+                onChange={(e) =>
+                  update({
+                    age: e.target.value ? parseInt(e.target.value, 10) : null,
+                  })
+                }
+                className={filterSelectClass}
+              >
+                <option value="">Any</option>
+                {AGE_SELECT_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Activity Type
+              </label>
+              <select
+                name="type"
+                value={activityType}
+                onChange={(e) => update({ activityType: e.target.value })}
+                className={filterSelectClass}
+              >
+                <option value="all">Any type</option>
+                {ACTIVITY_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Schedule
+              </label>
+              <select
+                name="schedule"
+                value={schedulePattern}
+                onChange={(e) => update({ schedulePattern: e.target.value })}
+                className={filterSelectClass}
+              >
+                <option value="all">Any schedule</option>
+                {SCHEDULE_PATTERNS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </form>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="mb-6 flex flex-wrap justify-center gap-2 sm:justify-start">
         <button
           type="button"
           onClick={() => update({ category: "all" })}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+          className={`rounded-full px-3 py-1.5 text-center text-xs font-semibold transition-colors ${
             category === "all"
               ? "bg-gray-900 text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -593,13 +517,13 @@ export default function ActivitiesClient({
             key={c}
             type="button"
             onClick={() => update({ category: category === c ? "all" : c })}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+            className={`rounded-full px-3 py-1.5 text-center text-xs font-semibold transition-colors ${
               category === c
                 ? "bg-gray-900 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {CATEGORY_ICONS[c]} {c}
+            {c}
           </button>
         ))}
       </div>
