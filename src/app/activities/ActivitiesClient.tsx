@@ -283,7 +283,11 @@ export default function ActivitiesClient({
     "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40";
 
   return (
-    <div className={`max-w-6xl mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}>
+    <div
+      className={`${
+        groupedCards ? "max-w-7xl" : "max-w-6xl"
+      } mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}
+    >
       {subtitle && (
         <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100">
           <div className="font-semibold text-green-900 text-sm text-center">
@@ -553,7 +557,7 @@ export default function ActivitiesClient({
         <div
           className={
             groupedCards
-              ? "mx-auto grid max-w-3xl grid-cols-1 gap-4"
+              ? "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               : "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
           }
         >
