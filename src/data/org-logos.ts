@@ -26,6 +26,26 @@ export const ORG_LOGOS: Record<string, string> = {
   "Central Park Tennis Center": "/logos/central-park-tennis.jpg",
   "Discovery Programs": "/logos/discovery-programs.png",
   "Harmony By Karate": "/logos/harmony-by-karate.png",
+  "Broadway Dance Center Children & Teens": "/logos/broadway-dance-center.png",
+  "Play On! Studios": "/logos/play-on-studios.png",
+  "The Art Farm": "/logos/the-art-farm.png",
+  "PLAYDAY UWS": "/logos/playday-uws.png",
+  "Spotlight Kids NY": "/logos/spotlight-kids-ny.png",
+  "West Side Dance Studio": "/logos/west-side-dance-studio.png",
+  "Dance with Miss Rachel": "/logos/dance-with-miss-rachel.png",
+  "Chess Max Academy": "/logos/chess-max-academy.png",
+  SOMATH: "/logos/school-of-math.png",
+  "School of Math": "/logos/school-of-math.png",
+  "Wise Wonder": "/logos/wise-wonder.png",
+  Bonjour: "/logos/bonjour.png",
+  "The Little Gym Upper Westside": "/logos/the-little-gym.png",
+  "New York Empire Baseball": "/logos/ny-empire-baseball.png",
+  "Mo’ Motion": "/logos/mo-motion.png",
+  "Mo' Motion": "/logos/mo-motion.png",
+  "Soccer Stars": "/logos/soccer-stars.png",
+  "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
+    "/logos/uws-brazilian-jiu-jitsu.jpg",
+  "Modern Martial Arts": "/logos/modern-martial-arts.png",
 };
 
 function normalizeOrgName(name: string): string {
