@@ -10,7 +10,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Manhattan Kids Activities",
+  title: "Little City Life",
   description:
     "Classes, camps, afterschool programs, museums, and events for NYC families — starting on the Upper West Side.",
 };
@@ -27,8 +27,7 @@ export default function RootLayout({
         <main>{children}</main>
         <footer className="mt-20 border-t border-border/70 py-10 text-center text-sm text-muted">
           <p>
-            © {new Date().getFullYear()} Manhattan Kids Activities. All rights
-            reserved.
+            © {new Date().getFullYear()} Little City Life. All rights reserved.
           </p>
         </footer>
       </body>
