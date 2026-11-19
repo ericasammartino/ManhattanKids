@@ -19,7 +19,23 @@ import {
   normalizePrimaryCategory,
   activityMatchesSubcategory,
   sessionRunsOnDay,
+  splitSubcategories,
 } from "@/lib/taxonomy";
+
+/** Match category filter against single or multi-tag Primary Category values. */
+function activityMatchesCategory(
+  raw: string | null | undefined,
+  selected: string
+): boolean {
+  const tokens = splitSubcategories(raw)
+    .map((t) => normalizePrimaryCategory(t))
+    .filter((t): t is string => Boolean(t));
+  if (tokens.length === 0) {
+    const whole = normalizePrimaryCategory(raw);
+    return whole === selected;
+  }
+  return tokens.includes(selected);
+}
 
 /** Infer neighborhood when the spreadsheet left it blank (common after Sheets sync). */
 const ZIP_TO_NEIGHBORHOOD: Record<string, string> = {
@@ -422,8 +438,9 @@ export function filterActivities(
     }
 
     if (filters.category && filters.category !== "all") {
-      const cat = normalizePrimaryCategory(activity["Primary Category"]);
-      if (cat !== filters.category) return false;
+      if (!activityMatchesCategory(activity["Primary Category"], filters.category)) {
+        return false;
+      }
     }
 
     if (filters.subcategory && filters.subcategory !== "all") {
