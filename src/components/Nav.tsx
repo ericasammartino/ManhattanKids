@@ -21,7 +21,7 @@ export default function Nav() {
           />
         </Link>
         <Link
-          href="/afterschool"
+          href="/"
           className="rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           Find Programs

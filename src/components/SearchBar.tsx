@@ -25,6 +25,8 @@ const AGE_OPTIONS = [
 const chipSelectClass =
   "bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer appearance-none text-center w-full";
 
+const ARROW_FILL = "#F6B346";
+
 export default function SearchBar({
   variant = "hero",
   resultsPath = "/afterschool",
@@ -91,7 +93,8 @@ export default function SearchBar({
           />
           <button
             type="submit"
-            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white transition-opacity hover:opacity-90"
+            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: ARROW_FILL }}
             aria-label="Search"
           >
             <ArrowRight className="h-4 w-4" />
@@ -131,7 +134,8 @@ export default function SearchBar({
         {age && <input type="hidden" name="age" value={age} />}
         <button
           type="submit"
-          className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white transition-opacity hover:opacity-90"
+          className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: ARROW_FILL }}
           aria-label="Search"
         >
           <ArrowRight className="h-[18px] w-[18px]" />
@@ -139,17 +143,35 @@ export default function SearchBar({
       </form>
 
       <div className="mt-3.5 flex flex-wrap justify-center gap-2">
-        <label className="filter-chip inline-flex min-w-[4.5rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
-          <span className="sr-only">Age</span>
+        <label className="filter-chip inline-flex min-w-[7rem] max-w-[11rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Category</span>
           <select
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            className={chipSelectClass}
-            aria-label="Child's age"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={`${chipSelectClass} max-w-[10rem]`}
+            aria-label="Category"
           >
-            {AGE_OPTIONS.map((o) => (
-              <option key={o.value || "any"} value={o.value}>
-                {o.label}
+            <option value="all">Category</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-chip inline-flex min-w-[7.5rem] max-w-[12rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Subcategory</span>
+          <select
+            value={subcategory}
+            onChange={(e) => setSubcategory(e.target.value)}
+            className={`${chipSelectClass} max-w-[11rem]`}
+            aria-label="Subcategory"
+          >
+            <option value="all">subcategory</option>
+            {SUBCATEGORY_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </select>
@@ -172,18 +194,17 @@ export default function SearchBar({
           </select>
         </label>
 
-        <label className="filter-chip inline-flex min-w-[7rem] max-w-[11rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
-          <span className="sr-only">Category</span>
+        <label className="filter-chip inline-flex min-w-[4.5rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Age</span>
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={`${chipSelectClass} max-w-[10rem]`}
-            aria-label="Category"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
+            className={chipSelectClass}
+            aria-label="Child's age"
           >
-            <option value="all">category</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {AGE_OPTIONS.map((o) => (
+              <option key={o.value || "any"} value={o.value}>
+                {o.label}
               </option>
             ))}
           </select>
@@ -198,15 +219,7 @@ export default function SearchBar({
           aria-expanded={showFilters}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          Filters
-        </button>
-
-        <button
-          type="button"
-          onClick={go}
-          className="filter-chip inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium"
-        >
-          search afterschool
+          filters
         </button>
       </div>
 

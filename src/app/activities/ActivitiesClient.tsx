@@ -540,10 +540,14 @@ export default function ActivitiesClient({
         <div className="text-center py-16">
           <div className="text-5xl mb-3">🔍</div>
           <h3 className="text-lg font-semibold text-gray-700 mb-1">
-            No activities found
+            {category !== "all" || subcategory !== "all"
+              ? "Check back soon…"
+              : "No activities found"}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Try a different search term or clear filters
+            {category !== "all" || subcategory !== "all"
+              ? "We’re still adding programs in this category. Try another interest or clear filters."
+              : "Try a different search term or clear filters"}
           </p>
           <button
             type="button"
