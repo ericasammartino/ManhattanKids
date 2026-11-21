@@ -12,10 +12,10 @@ export default function Nav() {
           aria-label="Little City Life home"
         >
           <Image
-            src="/little-city-life-logo.png"
+            src="/little-city-life-logo-dark.png"
             alt="Little City Life"
-            width={200}
-            height={46}
+            width={220}
+            height={73}
             className="h-8 w-auto sm:h-9"
             priority
           />

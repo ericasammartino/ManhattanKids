@@ -2,17 +2,14 @@ import Link from "next/link";
 import {
   BookOpen,
   Compass,
-  Clapperboard,
   LayoutGrid,
   Palette,
   Bot,
-  Ticket,
   Volleyball,
-  Sun,
 } from "lucide-react";
 
 type Props = {
-  /** Where interest links should open. Defaults to afterschool. */
+  /** Where interest links should open. Defaults to homepage afterschool browse. */
   resultsPath?: string;
 };
 
@@ -42,14 +39,6 @@ const INTERESTS = [
     icon: "#7c6bc4",
   },
   {
-    label: "Museums & Culture",
-    category: "Museums & Culture",
-    Icon: Ticket,
-    bg: "#d1fae5",
-    border: "#6ec9a8",
-    icon: "#2f9e7c",
-  },
-  {
     label: "Play & Exploration",
     category: "Play & Exploration",
     Icon: Compass,
@@ -58,28 +47,12 @@ const INTERESTS = [
     icon: "#3d9b5f",
   },
   {
-    label: "Entertainment",
-    category: "Entertainment",
-    Icon: Clapperboard,
-    bg: "#ffe4e0",
-    border: "#f0a090",
-    icon: "#d4644a",
-  },
-  {
     label: "Learning & Enrichment",
     category: "Learning & Enrichment",
     Icon: BookOpen,
     bg: "#ffedd5",
     border: "#f0b878",
     icon: "#d4833a",
-  },
-  {
-    label: "Afterschool Care",
-    category: "Afterschool Care",
-    Icon: Sun,
-    bg: "#e0f2fe",
-    border: "#7dd3fc",
-    icon: "#3b9fd0",
   },
   {
     label: "Explore All",
@@ -91,7 +64,7 @@ const INTERESTS = [
   },
 ] as const;
 
-export default function InterestOrbs({ resultsPath = "/afterschool" }: Props) {
+export default function InterestOrbs({ resultsPath = "/" }: Props) {
   return (
     <div className="mx-auto flex max-w-4xl flex-wrap items-start justify-center gap-x-8 gap-y-7 sm:gap-x-10 md:gap-x-12">
       {INTERESTS.map(({ label, category, Icon, bg, border, icon }, i) => {
@@ -106,7 +79,7 @@ export default function InterestOrbs({ resultsPath = "/afterschool" }: Props) {
             style={{ animationDelay: `${80 + i * 40}ms` }}
           >
             <span
-              className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-[2.5px] transition-transform group-hover:scale-105"
+              className="interest-orb-circle flex h-[76px] w-[76px] items-center justify-center rounded-full border-[2.5px]"
               style={{ background: bg, borderColor: border }}
             >
               <Icon

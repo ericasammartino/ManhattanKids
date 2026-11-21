@@ -109,11 +109,11 @@ body {
   background: rgba(255, 255, 255, 0.7);
 }
 
-.interest-orb {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.interest-orb-circle {
+  transition: transform 0.22s ease;
+  transform-origin: center center;
 }
 
-.interest-orb:hover {
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 8px 20px rgba(45, 41, 62, 0.08);
+.interest-orb:hover .interest-orb-circle {
+  transform: scale(1.12);
 }
