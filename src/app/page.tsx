@@ -23,12 +23,12 @@ export default async function Home({ searchParams }: Props) {
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-10 md:px-6 md:pb-10 md:pt-14">
         <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:gap-12">
           <div className="animate-fade-up">
-            <h1 className="max-w-[11ch] text-[2.6rem] font-extrabold leading-[1.08] tracking-tight text-foreground md:text-[3.35rem]">
-              The Best Kids&apos; Activities on the UWS
+            <h1 className="max-w-[18ch] text-[2.35rem] font-extrabold leading-[1.08] tracking-tight text-foreground md:text-[3.1rem]">
+              Find Their Next Favorite Afterschool Activity.
             </h1>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted md:text-base">
-              Afterschool enrichment classes, sports, STEM, arts, and more for
-              UWS families.
+            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted md:text-base">
+              Discover afterschool classes and programs on the Upper West Side.
+              From sports and STEM to art, music, and everything in between.
             </p>
             <div className="mt-7">
               <SearchBar resultsPath="/" />
