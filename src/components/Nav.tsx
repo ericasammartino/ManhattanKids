@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
 
 export default function Nav() {
   return (
@@ -21,28 +20,6 @@ export default function Nav() {
             priority
           />
         </Link>
-
-        <div className="hidden items-center gap-6 md:flex">
-          <Link
-            href="/#programs"
-            className="text-sm font-semibold text-foreground/80 transition-colors hover:text-foreground"
-          >
-            Afterschool Programs
-          </Link>
-          <Link
-            href="/#about"
-            className="text-sm font-semibold text-foreground/80 transition-colors hover:text-foreground"
-          >
-            About
-          </Link>
-          <Link
-            href="/#favorites"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground/80 transition-colors hover:text-foreground"
-          >
-            Favorites
-            <Heart className="h-3.5 w-3.5" aria-hidden />
-          </Link>
-        </div>
 
         <Link
           href="/#programs"

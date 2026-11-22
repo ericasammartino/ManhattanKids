@@ -44,7 +44,7 @@ export default function HeroSearch({ resultsPath = "/" }: Props) {
         name="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search activities, classes, camps & more…"
+        placeholder="Search afterschool activities"
         className="hero-search w-full rounded-full py-3.5 pl-11 pr-14 text-[15px] placeholder:text-foreground/45 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         autoComplete="off"
         aria-label="Search activities"

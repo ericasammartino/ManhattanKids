@@ -15,12 +15,13 @@ export const PRIMARY_CATEGORIES = [
 
 export type PrimaryCategory = (typeof PRIMARY_CATEGORIES)[number];
 
-/** Homepage results pills — Sports / Museums / Entertainment hidden for now. */
+/** Homepage results pills — Museums / Entertainment hidden for now. */
 export const RESULT_PILL_CATEGORIES = [
   "Afterschool Care",
   "Arts & Creativity",
   "Learning & Enrichment",
   "Play & Exploration",
+  "Sports & Movement",
   "STEM",
 ] as const;
 
