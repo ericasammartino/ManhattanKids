@@ -56,6 +56,8 @@ interface Props {
   emptyLabel?: string;
   /** Group multi-session classes into expandable class-time cards. */
   groupedCards?: boolean;
+  /** Show All + category pills above the results grid (homepage mock). */
+  showCategoryPills?: boolean;
   /** Filters resolved on the server from the URL so first paint matches the query. */
   initialFilters: ActivityFilters;
 }
@@ -103,6 +105,7 @@ export default function ActivitiesClient({
   defaultNeighborhood = "all",
   emptyLabel = "activities",
   groupedCards = false,
+  showCategoryPills = false,
   initialFilters,
 }: Props) {
   const router = useRouter();
@@ -299,9 +302,11 @@ export default function ActivitiesClient({
         groupedCards ? "max-w-7xl" : "max-w-6xl"
       } mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}
     >
-      <div className="mb-6 text-center sm:text-left">
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">{title}</h1>
-        <p className="text-gray-500 text-sm">
+      <div className="mb-5 text-left">
+        <h1 className="mb-1 text-3xl font-extrabold tracking-tight text-[#1D2B4B]">
+          {title}
+        </h1>
+        <p className="text-sm text-gray-500">
           {filtered.length} {emptyLabel}
           {search.trim() && (
             <span className="text-gray-400"> matching “{search.trim()}”</span>
@@ -309,7 +314,37 @@ export default function ActivitiesClient({
         </p>
       </div>
 
-      {/* Homepage afterschool browse uses the hero SearchBar; skip the duplicate listing search. */}
+      {showCategoryPills && (
+        <div className="mb-6 flex flex-wrap justify-start gap-2">
+          <button
+            type="button"
+            onClick={() => update({ category: "all" })}
+            className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
+              category === "all"
+                ? "bg-[#1D2B4B] text-white"
+                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            All
+          </button>
+          {CATEGORIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => update({ category: category === c ? "all" : c })}
+              className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
+                category === c
+                  ? "bg-[#1D2B4B] text-white"
+                  : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Homepage afterschool browse uses hero search + Filter Programs panel. */}
       {!isAfterschoolTab && (
       <form
         method="get"
