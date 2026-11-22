@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
@@ -10,31 +10,35 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import {
-  CATEGORIES,
-  SUBCATEGORY_OPTIONS,
-  DAY_OPTIONS,
-} from "@/lib/data";
+import { CATEGORIES, DAY_OPTIONS } from "@/lib/data";
 import { LOCATION_BANDS } from "@/lib/location-bands";
-import { resolveActivityFilters } from "@/lib/activity-filters";
+import {
+  encodeFilterList,
+  resolveActivityFilters,
+} from "@/lib/activity-filters";
+import { subcategoriesForCategories } from "@/lib/taxonomy";
+import MultiSelectMenu from "@/components/MultiSelectMenu";
 
-const AGE_OPTIONS = Array.from({ length: 19 }, (_, age) => age);
+const AGE_OPTIONS = Array.from({ length: 19 }, (_, age) => ({
+  value: String(age),
+  label: String(age),
+}));
 
-const ACTIVITY_TYPES = [
+const ACTIVITY_TYPE_OPTIONS = [
   "Afterschool Program",
   "Class",
   "Camp",
   "Event",
   "Drop-in",
   "Workshop",
-];
+].map((t) => ({ value: t, label: t }));
 
-const SCHEDULE_PATTERNS = [
+const SCHEDULE_OPTIONS = [
   "Recurring Weekly",
   "One-time",
   "Daily",
   "Weekend",
-];
+].map((s) => ({ value: s, label: s }));
 
 type Props = {
   resultsPath?: string;
@@ -56,14 +60,16 @@ export default function FilterProgramsPanel({
     { defaultType, defaultNeighborhood: "all" }
   );
 
-  const [category, setCategory] = useState(fromUrl.category);
-  const [subcategory, setSubcategory] = useState(fromUrl.subcategory);
-  const [day, setDay] = useState(fromUrl.day);
-  const [locationBand, setLocationBand] = useState(fromUrl.locationBand);
-  const [age, setAge] = useState<number | null>(fromUrl.age);
-  const [activityType, setActivityType] = useState(fromUrl.activityType);
-  const [schedulePattern, setSchedulePattern] = useState(
-    fromUrl.schedulePattern
+  const [categories, setCategories] = useState(fromUrl.categories);
+  const [subcategories, setSubcategories] = useState(fromUrl.subcategories);
+  const [days, setDays] = useState(fromUrl.days);
+  const [locationBands, setLocationBands] = useState(fromUrl.locationBands);
+  const [ages, setAges] = useState(fromUrl.ages.map(String));
+  const [activityTypes, setActivityTypes] = useState(
+    fromUrl.activityTypes.filter((t) => t !== defaultType)
+  );
+  const [schedulePatterns, setSchedulePatterns] = useState(
+    fromUrl.schedulePatterns
   );
 
   useEffect(() => {
@@ -71,49 +77,63 @@ export default function FilterProgramsPanel({
       Object.fromEntries(searchParams.entries()),
       { defaultType, defaultNeighborhood: "all" }
     );
-    setCategory(next.category);
-    setSubcategory(next.subcategory);
-    setDay(next.day);
-    setLocationBand(next.locationBand);
-    setAge(next.age);
-    setActivityType(next.activityType);
-    setSchedulePattern(next.schedulePattern);
+    setCategories(next.categories);
+    setSubcategories(next.subcategories);
+    setDays(next.days);
+    setLocationBands(next.locationBands);
+    setAges(next.ages.map(String));
+    setActivityTypes(next.activityTypes.filter((t) => t !== defaultType));
+    setSchedulePatterns(next.schedulePatterns);
     if (
-      next.activityType !== defaultType ||
-      next.schedulePattern !== "all"
+      next.activityTypes.some((t) => t !== defaultType) ||
+      next.schedulePatterns.length > 0
     ) {
       setShowMore(true);
     }
   }, [searchParams, defaultType]);
 
+  const subcategoryOptions = useMemo(
+    () =>
+      subcategoriesForCategories(categories).map((s) => ({
+        value: s,
+        label: s,
+      })),
+    [categories]
+  );
+
   const writeUrl = useCallback(
     (next: {
-      category: string;
-      subcategory: string;
-      day: string;
-      locationBand: string;
-      age: number | null;
-      activityType: string;
-      schedulePattern: string;
+      categories: string[];
+      subcategories: string[];
+      days: string[];
+      locationBands: string[];
+      ages: string[];
+      activityTypes: string[];
+      schedulePatterns: string[];
     }) => {
       const params = new URLSearchParams(searchParams.toString());
-      const setOrDelete = (key: string, value: string | null, skip = "all") => {
-        if (!value || value === skip) params.delete(key);
-        else params.set(key, value);
+      const setList = (key: string, values: string[]) => {
+        const encoded = encodeFilterList(values);
+        if (encoded) params.set(key, encoded);
+        else params.delete(key);
       };
-      setOrDelete("category", next.category);
-      setOrDelete("subcategory", next.subcategory);
-      setOrDelete("day", next.day);
-      setOrDelete("location", next.locationBand);
-      if (next.age === null) params.delete("age");
-      else params.set("age", String(next.age));
-      if (next.activityType === defaultType || next.activityType === "all") {
+
+      setList("category", next.categories);
+      setList("subcategory", next.subcategories);
+      setList("day", next.days);
+      setList("location", next.locationBands);
+      setList("age", next.ages);
+
+      const types =
+        next.activityTypes.length > 0 ? next.activityTypes : [defaultType];
+      if (types.length === 1 && types[0] === defaultType) {
         params.delete("type");
       } else {
-        params.set("type", next.activityType);
+        setList("type", types);
       }
-      setOrDelete("schedule", next.schedulePattern);
+      setList("schedule", next.schedulePatterns);
       params.set("neighborhood", "all");
+
       const qs = params.toString();
       const target = resultsPath === pathname ? pathname : resultsPath;
       startTransition(() => {
@@ -126,69 +146,71 @@ export default function FilterProgramsPanel({
   );
 
   const apply = (patch: Partial<{
-    category: string;
-    subcategory: string;
-    day: string;
-    locationBand: string;
-    age: number | null;
-    activityType: string;
-    schedulePattern: string;
+    categories: string[];
+    subcategories: string[];
+    days: string[];
+    locationBands: string[];
+    ages: string[];
+    activityTypes: string[];
+    schedulePatterns: string[];
   }>) => {
-    const next = {
-      category,
-      subcategory,
-      day,
-      locationBand,
-      age,
-      activityType,
-      schedulePattern,
-      ...patch,
-    };
-    if (patch.category !== undefined) setCategory(patch.category);
-    if (patch.subcategory !== undefined) setSubcategory(patch.subcategory);
-    if (patch.day !== undefined) setDay(patch.day);
-    if (patch.locationBand !== undefined) setLocationBand(patch.locationBand);
-    if (patch.age !== undefined) setAge(patch.age);
-    if (patch.activityType !== undefined) setActivityType(patch.activityType);
-    if (patch.schedulePattern !== undefined) {
-      setSchedulePattern(patch.schedulePattern);
+    let nextSubs = patch.subcategories ?? subcategories;
+    if (patch.categories) {
+      const allowed = new Set(subcategoriesForCategories(patch.categories));
+      nextSubs = nextSubs.filter((s) => allowed.has(s));
+      setCategories(patch.categories);
+      setSubcategories(nextSubs);
     }
-    writeUrl(next);
+    if (patch.subcategories !== undefined && !patch.categories) {
+      setSubcategories(patch.subcategories);
+    }
+    if (patch.days !== undefined) setDays(patch.days);
+    if (patch.locationBands !== undefined) setLocationBands(patch.locationBands);
+    if (patch.ages !== undefined) setAges(patch.ages);
+    if (patch.activityTypes !== undefined) setActivityTypes(patch.activityTypes);
+    if (patch.schedulePatterns !== undefined) {
+      setSchedulePatterns(patch.schedulePatterns);
+    }
+
+    writeUrl({
+      categories: patch.categories ?? categories,
+      subcategories: nextSubs,
+      days: patch.days ?? days,
+      locationBands: patch.locationBands ?? locationBands,
+      ages: patch.ages ?? ages,
+      activityTypes: patch.activityTypes ?? activityTypes,
+      schedulePatterns: patch.schedulePatterns ?? schedulePatterns,
+    });
   };
 
   const clearAll = () => {
-    setCategory("all");
-    setSubcategory("all");
-    setDay("all");
-    setLocationBand("all");
-    setAge(null);
-    setActivityType(defaultType);
-    setSchedulePattern("all");
+    setCategories([]);
+    setSubcategories([]);
+    setDays([]);
+    setLocationBands([]);
+    setAges([]);
+    setActivityTypes([]);
+    setSchedulePatterns([]);
     setShowMore(false);
     writeUrl({
-      category: "all",
-      subcategory: "all",
-      day: "all",
-      locationBand: "all",
-      age: null,
-      activityType: defaultType,
-      schedulePattern: "all",
+      categories: [],
+      subcategories: [],
+      days: [],
+      locationBands: [],
+      ages: [],
+      activityTypes: [],
+      schedulePatterns: [],
     });
   };
 
   const hasActive =
-    category !== "all" ||
-    subcategory !== "all" ||
-    day !== "all" ||
-    locationBand !== "all" ||
-    age !== null ||
-    (activityType !== "all" && activityType !== defaultType) ||
-    schedulePattern !== "all";
-
-  const fieldClass =
-    "flex w-full items-center gap-3 rounded-2xl border border-white/80 bg-white px-4 py-3.5 shadow-sm transition-shadow hover:shadow-md";
-  const selectClass =
-    "w-full appearance-none bg-transparent text-sm font-medium text-foreground focus:outline-none cursor-pointer";
+    categories.length > 0 ||
+    subcategories.length > 0 ||
+    days.length > 0 ||
+    locationBands.length > 0 ||
+    ages.length > 0 ||
+    activityTypes.length > 0 ||
+    schedulePatterns.length > 0;
 
   return (
     <section
@@ -213,134 +235,58 @@ export default function FilterProgramsPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <label className={fieldClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#FCE7EF]">
-              <Layers className="h-4 w-4 text-[#C45A7A]" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Category
-              </span>
-              <select
-                value={category}
-                onChange={(e) => apply({ category: e.target.value })}
-                className={selectClass}
-                aria-label="Category"
-              >
-                <option value="all">All Categories</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-
-          <label className={fieldClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#FFEDD5]">
-              <Tag className="h-4 w-4 text-[#D4833A]" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Subcategory
-              </span>
-              <select
-                value={subcategory}
-                onChange={(e) => apply({ subcategory: e.target.value })}
-                className={selectClass}
-                aria-label="Subcategory"
-              >
-                <option value="all">All Subcategories</option>
-                {SUBCATEGORY_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-
-          <label className={fieldClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#DBEAFE]">
-              <Calendar className="h-4 w-4 text-[#3B82F6]" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Day
-              </span>
-              <select
-                value={day}
-                onChange={(e) => apply({ day: e.target.value })}
-                className={selectClass}
-                aria-label="Day"
-              >
-                <option value="all">Any Day</option>
-                {DAY_OPTIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-
-          <label className={fieldClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#FEF3C7]">
-              <MapPin className="h-4 w-4 text-[#C9A227]" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Location
-              </span>
-              <select
-                value={locationBand}
-                onChange={(e) => apply({ locationBand: e.target.value })}
-                className={selectClass}
-                aria-label="Location"
-              >
-                <option value="all">All Neighborhoods</option>
-                {LOCATION_BANDS.map((band) => (
-                  <option key={band.id} value={band.id}>
-                    {band.label}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-
-          <label className={fieldClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#EDE9FE]">
-              <Users className="h-4 w-4 text-[#7C6BC4]" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Age
-              </span>
-              <select
-                value={age ?? ""}
-                onChange={(e) =>
-                  apply({
-                    age: e.target.value ? parseInt(e.target.value, 10) : null,
-                  })
-                }
-                className={selectClass}
-                aria-label="Age"
-              >
-                <option value="">All Ages</option>
-                {AGE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-
+          <MultiSelectMenu
+            label="Category"
+            icon={<Layers className="h-4 w-4 text-[#C45A7A]" aria-hidden />}
+            iconBg="#FCE7EF"
+            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+            selected={categories}
+            emptyLabel="All Categories"
+            onChange={(next) => apply({ categories: next })}
+          />
+          <MultiSelectMenu
+            label="Subcategory"
+            icon={<Tag className="h-4 w-4 text-[#D4833A]" aria-hidden />}
+            iconBg="#FFEDD5"
+            options={subcategoryOptions}
+            selected={subcategories}
+            emptyLabel="All Subcategories"
+            onChange={(next) => apply({ subcategories: next })}
+          />
+          <MultiSelectMenu
+            label="Day"
+            icon={<Calendar className="h-4 w-4 text-[#3B82F6]" aria-hidden />}
+            iconBg="#DBEAFE"
+            options={DAY_OPTIONS.map((d) => ({ value: d, label: d }))}
+            selected={days}
+            emptyLabel="Any Day"
+            onChange={(next) => apply({ days: next })}
+          />
+          <MultiSelectMenu
+            label="Location"
+            icon={<MapPin className="h-4 w-4 text-[#C9A227]" aria-hidden />}
+            iconBg="#FEF3C7"
+            options={LOCATION_BANDS.map((b) => ({
+              value: b.id,
+              label: b.label,
+            }))}
+            selected={locationBands}
+            emptyLabel="Entire UWS"
+            onChange={(next) => apply({ locationBands: next })}
+          />
+          <MultiSelectMenu
+            label="Age"
+            icon={<Users className="h-4 w-4 text-[#7C6BC4]" aria-hidden />}
+            iconBg="#EDE9FE"
+            options={AGE_OPTIONS}
+            selected={ages}
+            emptyLabel="All Ages"
+            onChange={(next) => apply({ ages: next })}
+          />
           <button
             type="button"
             onClick={() => setShowMore((open) => !open)}
-            className={`${fieldClass} text-left`}
+            className="flex w-full items-center gap-3 rounded-2xl border border-white/80 bg-white px-4 py-3.5 text-left shadow-sm transition-shadow hover:shadow-md"
             aria-expanded={showMore}
           >
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#DCFCE7]">
@@ -359,47 +305,26 @@ export default function FilterProgramsPanel({
 
         {showMore && (
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className={fieldClass}>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Activity Type
-                </span>
-                <select
-                  value={activityType}
-                  onChange={(e) => apply({ activityType: e.target.value })}
-                  className={selectClass}
-                  aria-label="Activity type"
-                >
-                  <option value={defaultType}>{defaultType}</option>
-                  {ACTIVITY_TYPES.filter((t) => t !== defaultType).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                  <option value="all">All types</option>
-                </select>
-              </span>
-            </label>
-            <label className={fieldClass}>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Schedule
-                </span>
-                <select
-                  value={schedulePattern}
-                  onChange={(e) => apply({ schedulePattern: e.target.value })}
-                  className={selectClass}
-                  aria-label="Schedule"
-                >
-                  <option value="all">Any schedule</option>
-                  {SCHEDULE_PATTERNS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
+            <MultiSelectMenu
+              label="Activity Type"
+              icon={<Layers className="h-4 w-4 text-[#059669]" aria-hidden />}
+              iconBg="#DCFCE7"
+              options={ACTIVITY_TYPE_OPTIONS}
+              selected={
+                activityTypes.length > 0 ? activityTypes : [defaultType]
+              }
+              emptyLabel={defaultType}
+              onChange={(next) => apply({ activityTypes: next })}
+            />
+            <MultiSelectMenu
+              label="Schedule"
+              icon={<Calendar className="h-4 w-4 text-[#059669]" aria-hidden />}
+              iconBg="#DCFCE7"
+              options={SCHEDULE_OPTIONS}
+              selected={schedulePatterns}
+              emptyLabel="Any schedule"
+              onChange={(next) => apply({ schedulePatterns: next })}
+            />
           </div>
         )}
       </div>

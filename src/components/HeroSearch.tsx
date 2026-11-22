@@ -20,7 +20,15 @@ export default function HeroSearch({ resultsPath = "/" }: Props) {
     if (trimmed) params.set("search", trimmed);
     params.set("neighborhood", "all");
     const qs = params.toString();
-    router.push(qs ? `${resultsPath}?${qs}` : `${resultsPath}#programs`);
+    const href = qs ? `${resultsPath}?${qs}#programs` : `${resultsPath}#programs`;
+    router.push(href);
+    // Ensure scroll even when already on the same path.
+    requestAnimationFrame(() => {
+      document.getElementById("programs")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const onSubmit = (e: FormEvent) => {
@@ -32,12 +40,12 @@ export default function HeroSearch({ resultsPath = "/" }: Props) {
     <form onSubmit={onSubmit} className="relative w-full max-w-xl" role="search">
       <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-foreground/55" />
       <input
-        type="search"
+        type="text"
         name="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search activities, classes, camps & more…"
-        className="hero-search w-full rounded-full py-3.5 pl-11 pr-14 text-[15px] placeholder:text-foreground/45 focus:outline-none"
+        className="hero-search w-full rounded-full py-3.5 pl-11 pr-14 text-[15px] placeholder:text-foreground/45 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         autoComplete="off"
         aria-label="Search activities"
       />

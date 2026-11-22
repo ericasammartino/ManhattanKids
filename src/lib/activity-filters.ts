@@ -1,17 +1,26 @@
 export type ActivityFilters = {
   search: string;
+  /** Empty array means all categories. */
+  categories: string[];
+  subcategories: string[];
+  neighborhood: string;
+  /** UWS cross-street band ids; empty = Entire UWS. */
+  locationBands: string[];
+  activityTypes: string[];
+  schedulePatterns: string[];
+  /** Selected ages; empty = all ages. */
+  ages: number[];
+  days: string[];
+  /** @deprecated Prefer `ages`. */
+  age: number | null;
+  ageMin: number | null;
+  ageMax: number | null;
+  /** Legacy single-value mirrors for older callers. */
   category: string;
   subcategory: string;
-  neighborhood: string;
-  /** UWS cross-street band id (e.g. "70-79") or "all". */
   locationBand: string;
   activityType: string;
   schedulePattern: string;
-  /** Child's age — program min/max must include this age. */
-  age: number | null;
-  /** @deprecated Prefer `age`; kept for legacy URLs / range overlap. */
-  ageMin: number | null;
-  ageMax: number | null;
   day: string;
 };
 
@@ -22,10 +31,30 @@ function first(
   return value;
 }
 
+function parseList(raw: string | string[] | undefined): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((v) => String(v).split(","))
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  if (!raw) return [];
+  return String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function parseAge(raw: string | undefined): number | null {
   if (!raw) return null;
   const n = parseInt(raw, 10);
   return Number.isFinite(n) ? n : null;
+}
+
+function parseAges(raw: string | string[] | undefined): number[] {
+  return parseList(raw)
+    .map((s) => parseInt(s, 10))
+    .filter((n) => Number.isFinite(n));
 }
 
 export function resolveActivityFilters(
@@ -41,29 +70,61 @@ export function resolveActivityFilters(
       ? "all"
       : (options.defaultNeighborhood ?? "all"));
 
+  const categories = parseList(searchParams.category).filter((c) => c !== "all");
+  const subcategories = parseList(searchParams.subcategory).filter(
+    (s) => s !== "all"
+  );
+  const days = parseList(searchParams.day).filter((d) => d !== "all");
+  const locationBands = parseList(searchParams.location).filter(
+    (l) => l !== "all"
+  );
+  const ages: number[] = parseAges(searchParams.age);
+
+  let activityTypes = parseList(searchParams.type).filter((t) => t !== "all");
+  if (activityTypes.length === 0 && defaultType !== "all") {
+    activityTypes = [defaultType];
+  }
+  const schedulePatterns = parseList(searchParams.schedule).filter(
+    (s) => s !== "all"
+  );
+
   const ageRaw = first(searchParams.age);
   const ageMinRaw = first(searchParams.ageMin);
   const ageMaxRaw = first(searchParams.ageMax);
 
-  // Single `age` wins. If only ageMin is present (no ageMax), treat as child's age.
-  let age = parseAge(ageRaw);
+  let age = ages.length === 1 ? ages[0] : parseAge(ageRaw);
   const ageMin = parseAge(ageMinRaw);
   const ageMax = parseAge(ageMaxRaw);
   if (age === null && ageMin !== null && ageMax === null) {
     age = ageMin;
   }
+  if (ages.length === 0 && age !== null) {
+    ages.push(age);
+  }
 
   return {
     search,
-    category: first(searchParams.category) ?? "all",
-    subcategory: first(searchParams.subcategory) ?? "all",
+    categories,
+    subcategories,
     neighborhood,
-    locationBand: first(searchParams.location) ?? "all",
-    activityType: first(searchParams.type) ?? defaultType,
-    schedulePattern: first(searchParams.schedule) ?? "all",
+    locationBands,
+    activityTypes,
+    schedulePatterns,
+    ages,
+    days,
     age,
     ageMin,
     ageMax,
-    day: first(searchParams.day) ?? "all",
+    category: categories[0] ?? "all",
+    subcategory: subcategories[0] ?? "all",
+    locationBand: locationBands[0] ?? "all",
+    activityType: activityTypes[0] ?? defaultType,
+    schedulePattern: schedulePatterns[0] ?? "all",
+    day: days[0] ?? "all",
   };
+}
+
+export function encodeFilterList(values: string[]): string | null {
+  const cleaned = values.filter(Boolean);
+  return cleaned.length ? cleaned.join(",") : null;
 }

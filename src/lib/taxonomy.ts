@@ -15,6 +15,102 @@ export const PRIMARY_CATEGORIES = [
 
 export type PrimaryCategory = (typeof PRIMARY_CATEGORIES)[number];
 
+/** Homepage results pills — Sports / Museums / Entertainment hidden for now. */
+export const RESULT_PILL_CATEGORIES = [
+  "Afterschool Care",
+  "Arts & Creativity",
+  "Learning & Enrichment",
+  "Play & Exploration",
+  "STEM",
+] as const;
+
+/** Subcategories typically offered under each primary category (Session-21). */
+export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
+  "Afterschool Care": [
+    "Arts & Crafts",
+    "Coding",
+    "Dance",
+    "Educational",
+    "Gaming",
+    "General Afterschool",
+    "Gymnastics",
+    "Homework Help",
+    "Math",
+    "Music",
+    "Robotics",
+    "Science",
+    "Sports",
+    "Technology",
+    "Tutoring",
+  ],
+  "Arts & Creativity": [
+    "Arts & Crafts",
+    "Ballet",
+    "Ceramics",
+    "Contemporary",
+    "Cooking & Baking",
+    "Creative Writing",
+    "Dance",
+    "Drama",
+    "Hip-hop",
+    "Jazz",
+    "Music",
+    "Painting",
+    "Performing Arts",
+    "Piano",
+    "Sewing",
+    "Tap",
+    "Theater",
+    "Visual Arts",
+  ],
+  Entertainment: ["Movies", "Attractions"],
+  "Learning & Enrichment": [
+    "Chess",
+    "Coding",
+    "Educational",
+    "Engineering",
+    "Gaming",
+    "Homework Help",
+    "Language",
+    "Math",
+    "Reading",
+    "Robotics",
+    "Science",
+    "Technology",
+    "Writing",
+  ],
+  "Museums & Culture": ["Museums", "Cultural Experiences", "History"],
+  "Play & Exploration": ["Gaming", "Indoor Play", "Outdoor Activities"],
+  "Sports & Movement": [
+    "Ballet",
+    "Baseball",
+    "Basketball",
+    "Contemporary",
+    "Dance",
+    "Gymnastics",
+    "Hip-hop",
+    "Jazz",
+    "Martial Arts",
+    "Performing Arts",
+    "Soccer",
+    "Sports",
+    "Swimming",
+    "Tap",
+    "Tennis",
+    "Theater",
+  ],
+  STEM: [
+    "Coding",
+    "Educational",
+    "Engineering",
+    "Gaming",
+    "Math",
+    "Robotics",
+    "Science",
+    "Technology",
+  ],
+};
+
 /** Updated subcategory list (screenshot + Lists sheet). */
 export const ACTIVE_SUBCATEGORIES = [
   "Academic",
@@ -70,6 +166,15 @@ export const ACTIVE_SUBCATEGORIES = [
 ] as const;
 
 export const SUBCATEGORIES = [...ACTIVE_SUBCATEGORIES] as const;
+
+export function subcategoriesForCategories(categories: string[]): string[] {
+  if (categories.length === 0) return [...ACTIVE_SUBCATEGORIES];
+  const set = new Set<string>();
+  for (const cat of categories) {
+    for (const sub of CATEGORY_SUBCATEGORIES[cat] ?? []) set.add(sub);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
 
 export const DAYS_OF_WEEK = [
   "Monday",

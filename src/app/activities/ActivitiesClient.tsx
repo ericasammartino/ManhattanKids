@@ -16,10 +16,12 @@ import {
   DAY_OPTIONS,
 } from "@/lib/data";
 import {
+  encodeFilterList,
   resolveActivityFilters,
   type ActivityFilters,
 } from "@/lib/activity-filters";
 import { LOCATION_BANDS } from "@/lib/location-bands";
+import { RESULT_PILL_CATEGORIES } from "@/lib/taxonomy";
 import ActivityCard from "@/components/ActivityCard";
 import GroupedActivityCard from "@/components/GroupedActivityCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -62,35 +64,61 @@ interface Props {
   initialFilters: ActivityFilters;
 }
 
-function buildQuery(filters: ActivityFilters): string {
+function listKey(values: string[]): string {
+  return [...values].sort().join("\u0001");
+}
+
+function buildQuery(filters: ActivityFilters, defaultType: string): string {
   const params = new URLSearchParams();
   if (filters.search.trim()) params.set("search", filters.search.trim());
-  if (filters.category !== "all") params.set("category", filters.category);
-  if (filters.subcategory !== "all") {
-    params.set("subcategory", filters.subcategory);
-  }
-  // Neighborhood UI removed — always browse all.
+  const setList = (key: string, values: string[]) => {
+    const encoded = encodeFilterList(values);
+    if (encoded) params.set(key, encoded);
+  };
+  setList("category", filters.categories);
+  setList("subcategory", filters.subcategories);
+  setList("day", filters.days);
+  setList("location", filters.locationBands);
+  setList(
+    "age",
+    filters.ages.length > 0
+      ? filters.ages.map(String)
+      : filters.age !== null
+        ? [String(filters.age)]
+        : []
+  );
   params.set("neighborhood", "all");
-  if (filters.locationBand !== "all") params.set("location", filters.locationBand);
-  if (filters.activityType !== "all") params.set("type", filters.activityType);
-  if (filters.schedulePattern !== "all") {
-    params.set("schedule", filters.schedulePattern);
+  const types =
+    filters.activityTypes.length > 0
+      ? filters.activityTypes
+      : filters.activityType !== "all"
+        ? [filters.activityType]
+        : [];
+  if (!(types.length === 1 && types[0] === defaultType)) {
+    setList("type", types);
   }
-  if (filters.day !== "all") params.set("day", filters.day);
-  if (filters.age !== null) params.set("age", String(filters.age));
+  setList(
+    "schedule",
+    filters.schedulePatterns.length > 0
+      ? filters.schedulePatterns
+      : filters.schedulePattern !== "all"
+        ? [filters.schedulePattern]
+        : []
+  );
   return params.toString();
 }
 
 function sameFilters(a: ActivityFilters, b: ActivityFilters): boolean {
   return (
     a.search === b.search &&
-    a.category === b.category &&
-    a.subcategory === b.subcategory &&
+    listKey(a.categories) === listKey(b.categories) &&
+    listKey(a.subcategories) === listKey(b.subcategories) &&
     a.neighborhood === b.neighborhood &&
-    a.locationBand === b.locationBand &&
-    a.activityType === b.activityType &&
-    a.schedulePattern === b.schedulePattern &&
-    a.day === b.day &&
+    listKey(a.locationBands) === listKey(b.locationBands) &&
+    listKey(a.activityTypes) === listKey(b.activityTypes) &&
+    listKey(a.schedulePatterns) === listKey(b.schedulePatterns) &&
+    listKey(a.days) === listKey(b.days) &&
+    listKey(a.ages.map(String)) === listKey(b.ages.map(String)) &&
     a.age === b.age &&
     a.ageMin === b.ageMin &&
     a.ageMax === b.ageMax
@@ -115,77 +143,40 @@ export default function ActivitiesClient({
   const skipUrlSync = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [search, setSearch] = useState(initialFilters.search);
-  const [category, setCategory] = useState(initialFilters.category);
-  const [subcategory, setSubcategory] = useState(initialFilters.subcategory);
-  const [neighborhood, setNeighborhood] = useState(initialFilters.neighborhood);
-  const [locationBand, setLocationBand] = useState(initialFilters.locationBand);
-  const [activityType, setActivityType] = useState(initialFilters.activityType);
-  const [schedulePattern, setSchedulePattern] = useState(
-    initialFilters.schedulePattern
-  );
-  const [day, setDay] = useState(initialFilters.day);
-  const [age, setAge] = useState<number | null>(initialFilters.age);
-  const [ageMin, setAgeMin] = useState<number | null>(initialFilters.ageMin);
-  const [ageMax, setAgeMax] = useState<number | null>(initialFilters.ageMax);
+  const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
   const [showFilters, setShowFilters] = useState(
-    initialFilters.schedulePattern !== "all" ||
-      initialFilters.subcategory !== "all" ||
-      initialFilters.locationBand !== "all" ||
-      initialFilters.day !== "all" ||
+    initialFilters.schedulePatterns.length > 0 ||
+      initialFilters.subcategories.length > 0 ||
+      initialFilters.locationBands.length > 0 ||
+      initialFilters.days.length > 0 ||
+      initialFilters.ages.length > 0 ||
       initialFilters.age !== null ||
       initialFilters.ageMin !== null ||
       initialFilters.ageMax !== null ||
-      (initialFilters.activityType !== "all" &&
-        initialFilters.activityType !== defaultType)
+      initialFilters.activityTypes.some((t) => t !== defaultType)
   );
 
-  const filters: ActivityFilters = useMemo(
-    () => ({
-      search,
-      category,
-      subcategory,
-      neighborhood,
-      locationBand,
-      activityType,
-      schedulePattern,
-      day,
-      age,
-      ageMin,
-      ageMax,
-    }),
-    [
-      search,
-      category,
-      subcategory,
-      neighborhood,
-      locationBand,
-      activityType,
-      schedulePattern,
-      day,
-      age,
-      ageMin,
-      ageMax,
-    ]
-  );
+  const {
+    search,
+    categories,
+    category,
+    subcategory,
+    locationBand,
+    activityType,
+    schedulePattern,
+    day,
+    age,
+    ageMin,
+    ageMax,
+  } = filters;
 
   const applyFiltersState = useCallback((next: ActivityFilters) => {
-    setSearch(next.search);
-    setCategory(next.category);
-    setSubcategory(next.subcategory);
-    setNeighborhood(next.neighborhood);
-    setLocationBand(next.locationBand);
-    setActivityType(next.activityType);
-    setSchedulePattern(next.schedulePattern);
-    setDay(next.day);
-    setAge(next.age);
-    setAgeMin(next.ageMin);
-    setAgeMax(next.ageMax);
+    setFilters(next);
   }, []);
 
   const writeUrl = useCallback(
     (next: ActivityFilters) => {
-      const qs = buildQuery(next);
+      const qs = buildQuery(next, defaultType);
       const current = searchParams.toString();
       if (qs === current) return;
       skipUrlSync.current = true;
@@ -193,7 +184,7 @@ export default function ActivitiesClient({
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [pathname, router, searchParams]
+    [defaultType, pathname, router, searchParams]
   );
 
   // Browser back/forward or inbound links → sync URL into local state.
@@ -221,27 +212,50 @@ export default function ActivitiesClient({
 
   const update = useCallback(
     (patch: Partial<ActivityFilters>, options?: { debounceSearch?: boolean }) => {
-      const next = { ...filters, ...patch };
-      if (patch.search !== undefined) setSearch(patch.search);
-      if (patch.category !== undefined) setCategory(patch.category);
-      if (patch.subcategory !== undefined) setSubcategory(patch.subcategory);
-      if (patch.neighborhood !== undefined) setNeighborhood(patch.neighborhood);
-      if (patch.locationBand !== undefined) setLocationBand(patch.locationBand);
-      if (patch.activityType !== undefined) setActivityType(patch.activityType);
-      if (patch.schedulePattern !== undefined) {
-        setSchedulePattern(patch.schedulePattern);
+      const next: ActivityFilters = { ...filters, ...patch };
+      if (patch.category !== undefined && patch.categories === undefined) {
+        next.categories =
+          patch.category && patch.category !== "all" ? [patch.category] : [];
       }
-      if (patch.day !== undefined) setDay(patch.day);
+      if (patch.categories !== undefined) {
+        next.category = patch.categories[0] ?? "all";
+      }
+      if (patch.subcategory !== undefined && patch.subcategories === undefined) {
+        next.subcategories =
+          patch.subcategory && patch.subcategory !== "all"
+            ? [patch.subcategory]
+            : [];
+      }
+      if (patch.day !== undefined && patch.days === undefined) {
+        next.days = patch.day && patch.day !== "all" ? [patch.day] : [];
+      }
+      if (patch.locationBand !== undefined && patch.locationBands === undefined) {
+        next.locationBands =
+          patch.locationBand && patch.locationBand !== "all"
+            ? [patch.locationBand]
+            : [];
+      }
+      if (patch.activityType !== undefined && patch.activityTypes === undefined) {
+        next.activityTypes =
+          patch.activityType && patch.activityType !== "all"
+            ? [patch.activityType]
+            : [];
+      }
+      if (
+        patch.schedulePattern !== undefined &&
+        patch.schedulePatterns === undefined
+      ) {
+        next.schedulePatterns =
+          patch.schedulePattern && patch.schedulePattern !== "all"
+            ? [patch.schedulePattern]
+            : [];
+      }
       if (patch.age !== undefined) {
-        setAge(patch.age);
-        // Single-age mode clears legacy range params.
-        setAgeMin(null);
-        setAgeMax(null);
         next.ageMin = null;
         next.ageMax = null;
+        next.ages = patch.age !== null ? [patch.age] : [];
       }
-      if (patch.ageMin !== undefined) setAgeMin(patch.ageMin);
-      if (patch.ageMax !== undefined) setAgeMax(patch.ageMax);
+      setFilters(next);
 
       if (searchTimer.current) clearTimeout(searchTimer.current);
       if (options?.debounceSearch && patch.search !== undefined) {
@@ -257,12 +271,13 @@ export default function ActivitiesClient({
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
-    category !== "all" ||
-    subcategory !== "all" ||
-    locationBand !== "all" ||
-    activityType !== defaultType ||
-    schedulePattern !== "all" ||
-    day !== "all" ||
+    categories.length > 0 ||
+    filters.subcategories.length > 0 ||
+    filters.locationBands.length > 0 ||
+    filters.days.length > 0 ||
+    filters.ages.length > 0 ||
+    filters.activityTypes.some((t) => t !== defaultType) ||
+    filters.schedulePatterns.length > 0 ||
     age !== null ||
     ageMin !== null ||
     ageMax !== null;
@@ -270,9 +285,16 @@ export default function ActivitiesClient({
   const clearFilters = () => {
     const cleared: ActivityFilters = {
       search: "",
+      categories: [],
+      subcategories: [],
+      neighborhood: "all",
+      locationBands: [],
+      activityTypes: defaultType !== "all" ? [defaultType] : [],
+      schedulePatterns: [],
+      ages: [],
+      days: [],
       category: "all",
       subcategory: "all",
-      neighborhood: "all",
       locationBand: "all",
       activityType: defaultType,
       schedulePattern: "all",
@@ -318,29 +340,40 @@ export default function ActivitiesClient({
         <div className="mb-6 flex flex-wrap justify-start gap-2">
           <button
             type="button"
-            onClick={() => update({ category: "all" })}
+            onClick={() =>
+              update({ category: "all", categories: [] })
+            }
             className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
-              category === "all"
+              categories.length === 0
                 ? "bg-[#1D2B4B] text-white"
                 : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
             All
           </button>
-          {CATEGORIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => update({ category: category === c ? "all" : c })}
-              className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
-                category === c
-                  ? "bg-[#1D2B4B] text-white"
-                  : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+          {RESULT_PILL_CATEGORIES.map((c) => {
+            const active =
+              categories.length === 1 && categories[0] === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() =>
+                  update({
+                    category: active ? "all" : c,
+                    categories: active ? [] : [c],
+                  })
+                }
+                className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
+                  active
+                    ? "bg-[#1D2B4B] text-white"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -491,7 +524,7 @@ export default function ActivitiesClient({
                 onChange={(e) => update({ locationBand: e.target.value })}
                 className={filterSelectClass}
               >
-                <option value="all">Any blocks</option>
+                <option value="all">Entire UWS</option>
                 {LOCATION_BANDS.map((band) => (
                   <option key={band.id} value={band.id}>
                     {band.label}
