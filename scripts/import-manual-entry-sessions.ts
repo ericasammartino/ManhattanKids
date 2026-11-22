@@ -35,6 +35,7 @@ const CATEGORY_MAP: Record<string, string> = {
 const ORG_LOGOS: Record<string, string> = {
   "Marlene Meyerson JCC Manhattan": "/logos/marlene-meyerson-jcc.png",
   "West Side YMCA Y Afterschool": "/logos/ymca.jpg",
+  "West Side YMCA": "/logos/ymca.jpg",
   "Goddard Riverside - Lincoln Center": "/logos/goddard-riverside.png",
   "Goddard Riverside - Beacon": "/logos/goddard-riverside.png",
   "Supermud Pottery": "/logos/supermud.jpg",
@@ -45,7 +46,93 @@ const ORG_LOGOS: Record<string, string> = {
   "Writopia Lab Upper West Side": "/logos/writopia-lab.png",
   "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.jpg",
   "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.jpg",
+  "Elliott’s Classes": "/logos/elliotts-classes.png",
+  "FunFit Kids": "/logos/funfit.png",
+  "Central Park Tennis Center": "/logos/central-park-tennis.jpg",
+  "Discovery Programs": "/logos/discovery-programs.png",
+  "Harmony By Karate": "/logos/harmony-by-karate.png",
+  "Broadway Dance Center Children & Teens": "/logos/broadway-dance-center.png",
+  "Play On! Studios": "/logos/play-on-studios.png",
+  "The Art Farm": "/logos/the-art-farm.png",
+  "PLAYDAY UWS": "/logos/playday-uws.png",
+  "Spotlight Kids NY": "/logos/spotlight-kids-ny.png",
+  "West Side Dance Studio": "/logos/west-side-dance-studio.png",
+  "Dance with Miss Rachel": "/logos/dance-with-miss-rachel.png",
+  "Chess Max Academy": "/logos/chess-max-academy.png",
+  SOMATH: "/logos/school-of-math.png",
+  "Wise Wonder": "/logos/wise-wonder.png",
+  Bonjour: "/logos/bonjour.png",
+  "The Little Gym Upper Westside": "/logos/the-little-gym.png",
+  "New York Empire Baseball": "/logos/ny-empire-baseball.png",
+  "Mo’ Motion": "/logos/mo-motion.png",
+  "Soccer Stars": "/logos/soccer-stars.png",
+  "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
+    "/logos/uws-brazilian-jiu-jitsu.jpg",
+  "Modern Martial Arts": "/logos/modern-martial-arts.png",
 };
+
+/** Fallback provider websites when Business Discovery / Source URL is empty. */
+const ORG_WEBSITES: Record<string, string> = {
+  "Marlene Meyerson JCC Manhattan": "https://jccmanhattan.org/",
+  "West Side YMCA Y Afterschool": "https://ymcanyc.org/locations/west-side-ymca",
+  "West Side YMCA": "https://ymcanyc.org/locations/west-side-ymca",
+  "Goddard Riverside - Lincoln Center": "https://www.goddard.org/",
+  "Goddard Riverside - Beacon": "https://www.goddard.org/",
+  "Supermud Pottery": "https://www.supermud.com/",
+  "Bloomingdale Library": "https://www.nypl.org/locations/bloomingdale",
+  "Riverside Library": "https://www.nypl.org/locations/riverside",
+  Robofun: "https://www.robofun.org/",
+  ZPlaySchool: "https://www.zplayschool.com/",
+  "Writopia Lab Upper West Side": "https://www.writopialab.org/",
+  "Tim Morehouse Fencing Club": "https://www.timmorehousefencing.com/",
+  "NYC Elite Gymnastics": "https://www.nycelitegymnastics.com/",
+  "Elliott’s Classes": "https://www.elliottsclasses.com/",
+  "FunFit Kids": "https://www.funfitkids.com/",
+  "Central Park Tennis Center": "https://www.centralparktenniscenter.com/",
+  "Discovery Programs": "https://www.discoveryprograms.com/",
+  "Harmony By Karate": "https://www.harmonybykarate.com/",
+  "Broadway Dance Center Children & Teens":
+    "https://www.broadwaydancecenter.com/children-teens",
+  "Play On! Studios": "https://www.playonstudios.com/",
+  "The Art Farm": "https://www.theartfarminc.com/",
+  "PLAYDAY UWS": "https://www.playdaynyc.com/",
+  "Spotlight Kids NY": "https://www.spotlightkidsny.com/",
+  "West Side Dance Studio": "https://westsidedancestudio.com/",
+  "Dance with Miss Rachel": "https://www.dancewithmissrachel.com/",
+  "Chess Max Academy": "https://www.chessmaxacademy.com/",
+  SOMATH: "https://www.schoolofmath.com/",
+  "Wise Wonder": "https://www.wisewonder.org/",
+  Bonjour: "https://www.bonjourlanguages.com/",
+  "The Little Gym Upper Westside": "https://www.thelittlegym.com/",
+  "New York Empire Baseball": "https://www.nyempirebaseball.com/",
+  "Mo’ Motion": "https://www.momotiondance.com/",
+  "Soccer Stars": "https://www.soccerstars.com/",
+  "Modern Martial Arts": "https://www.modernmartialarts.com/",
+  "Steps on Broadway Academy": "https://www.stepsnyc.com/",
+  "Launch Math + Science Centers": "https://www.launcheducation.com/",
+  "Baker Piano Studio": "https://www.bakerpianostudio.com/",
+  "UWS Piano School": "https://www.uwspianoschool.com/",
+  "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
+    "https://www.uwsbjj.com/",
+  "Broadway TaeKwonDo": "https://www.broadwaytkd.com/",
+  "Children’s Aid-Frederick Douglass Community Center":
+    "https://www.childrensaidnyc.org/",
+  "Strycker’s Bay Neighborhood Council": "https://www.stryckersbay.org/",
+};
+
+function normalizeName(name: string): string {
+  return name
+    .normalize("NFKC")
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isPlaceholderCross(value: string | null): boolean {
+  if (!value) return true;
+  return /needs location/i.test(value);
+}
 
 function text(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -210,8 +297,45 @@ async function main() {
   const rows = raw.filter((r) => text(r["Session / Class Name"]) && text(r.Organization));
   console.log(`Found ${rows.length} session rows on "${sheetName}"`);
 
+  // Optional website hints from Business Discovery / Organizations sheets.
+  const websiteByName = new Map<string, string>();
+  for (const [name, url] of Object.entries(ORG_WEBSITES)) {
+    websiteByName.set(normalizeName(name), url);
+  }
+  const discoverySheet = workbook.Sheets["Business Discovery"];
+  if (discoverySheet) {
+    const discovery = XLSX.utils.sheet_to_json(discoverySheet, {
+      defval: null,
+    }) as Row[];
+    for (const row of discovery) {
+      const name = text(row["Business Name"]) ?? text(row["Organization Name"]);
+      const website = text(row.Website) ?? text(row["Website URL"]);
+      if (!name || !website) continue;
+      const key = normalizeName(name);
+      if (!websiteByName.has(key)) websiteByName.set(key, website);
+    }
+  }
+  const orgsSheet = workbook.Sheets.Organizations;
+  if (orgsSheet) {
+    const orgRows = XLSX.utils.sheet_to_json(orgsSheet, {
+      defval: null,
+    }) as Row[];
+    for (const row of orgRows) {
+      const name = text(row["Organization Name"]);
+      const website = text(row.Website) ?? text(row["Source URL"]);
+      if (!name || !website) continue;
+      const key = normalizeName(name);
+      if (!websiteByName.has(key)) websiteByName.set(key, website);
+    }
+  }
+
+  function websiteForOrg(orgName: string): string | null {
+    return websiteByName.get(normalizeName(orgName)) ?? null;
+  }
+
   const orgIds = new Map<string, string>();
   const locIds = new Map<string, string>(); // key: orgId|address
+  const locById = new Map<string, Row>();
   const activityIds = new Map<string, string>(); // key: orgId|name|category|ageMin|ageMax
 
   const organizations: Row[] = [];
@@ -242,8 +366,14 @@ async function main() {
     const cost = text(row.Cost);
     const price = parseCost(row.Cost);
     const address = text(row.Address);
+    const crossStreets = text(row["Cross Streets"]);
     const notes = text(row.Notes);
-    const sourceUrl = text(row["Source URL"]);
+    const sourceUrl =
+      text(row["Source URL"]) ??
+      (text(row.Registration)?.startsWith("http")
+        ? text(row.Registration)
+        : null) ??
+      websiteForOrg(orgName);
     const sourceType = text(row["Source Type"]);
     const zip = parseZip(address);
 
@@ -273,7 +403,7 @@ async function main() {
     if (!locIds.has(locKey)) {
       const id = `LOC-${pad(locSeq++)}`;
       locIds.set(locKey, id);
-      locations.push({
+      const loc: Row = {
         "Location ID": id,
         "Location Name": orgName,
         "Organization ID": orgId,
@@ -281,6 +411,7 @@ async function main() {
         Description: null,
         "Street Address": address,
         "Address Line 2": null,
+        "Cross Streets": isPlaceholderCross(crossStreets) ? null : crossStreets,
         Neighborhood: inferNeighborhood(address, orgName),
         Borough: "Manhattan",
         "Zip Code": zip,
@@ -302,7 +433,19 @@ async function main() {
         Status: "Active",
         "Last Verified": null,
         Notes: null,
-      });
+      };
+      locations.push(loc);
+      locById.set(id, loc);
+    } else {
+      const existing = locById.get(locIds.get(locKey)!)!;
+      // Prefer a real cross-street over placeholder / empty.
+      if (
+        crossStreets &&
+        !isPlaceholderCross(crossStreets) &&
+        isPlaceholderCross(text(existing["Cross Streets"]))
+      ) {
+        existing["Cross Streets"] = crossStreets;
+      }
     }
     const locId = locIds.get(locKey)!;
 

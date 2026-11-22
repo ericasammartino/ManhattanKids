@@ -7,6 +7,7 @@ import {
   SUBCATEGORY_OPTIONS,
   DAY_OPTIONS,
 } from "@/lib/data";
+import { LOCATION_BANDS } from "@/lib/location-bands";
 
 type Props = {
   variant?: "hero" | "compact";
@@ -34,6 +35,7 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [subcategory, setSubcategory] = useState("all");
+  const [locationBand, setLocationBand] = useState("all");
   const [day, setDay] = useState("all");
   const [age, setAge] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -48,6 +50,9 @@ export default function SearchBar({
     if (category && category !== "all") params.set("category", category);
     if (subcategory && subcategory !== "all") {
       params.set("subcategory", subcategory);
+    }
+    if (locationBand && locationBand !== "all") {
+      params.set("location", locationBand);
     }
     if (day && day !== "all") params.set("day", day);
     if (age) params.set("age", age);
@@ -68,6 +73,7 @@ export default function SearchBar({
   const filtersActive =
     category !== "all" ||
     subcategory !== "all" ||
+    locationBand !== "all" ||
     day !== "all" ||
     Boolean(age);
 
@@ -130,6 +136,9 @@ export default function SearchBar({
         {subcategory !== "all" && (
           <input type="hidden" name="subcategory" value={subcategory} />
         )}
+        {locationBand !== "all" && (
+          <input type="hidden" name="location" value={locationBand} />
+        )}
         {day !== "all" && <input type="hidden" name="day" value={day} />}
         {age && <input type="hidden" name="age" value={age} />}
         <button
@@ -189,6 +198,23 @@ export default function SearchBar({
             {DAY_OPTIONS.map((d) => (
               <option key={d} value={d}>
                 {d}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filter-chip inline-flex min-w-[6.5rem] max-w-[11rem] items-center justify-center rounded-full px-3.5 py-1.5 text-sm cursor-pointer">
+          <span className="sr-only">Location</span>
+          <select
+            value={locationBand}
+            onChange={(e) => setLocationBand(e.target.value)}
+            className={`${chipSelectClass} max-w-[10rem]`}
+            aria-label="Location by street band"
+          >
+            <option value="all">location</option>
+            {LOCATION_BANDS.map((band) => (
+              <option key={band.id} value={band.id}>
+                {band.label}
               </option>
             ))}
           </select>
@@ -281,6 +307,24 @@ export default function SearchBar({
           </div>
           <div>
             <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
+              Location
+            </label>
+            <select
+              value={locationBand}
+              onChange={(e) => setLocationBand(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-[#F6B346]/40"
+              aria-label="Location by street band"
+            >
+              <option value="all">Any blocks</option>
+              {LOCATION_BANDS.map((band) => (
+                <option key={band.id} value={band.id}>
+                  {band.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-center text-xs font-semibold text-muted">
               Age
             </label>
             <select
@@ -304,6 +348,7 @@ export default function SearchBar({
                 onClick={() => {
                   setCategory("all");
                   setSubcategory("all");
+                  setLocationBand("all");
                   setDay("all");
                   setAge("");
                 }}

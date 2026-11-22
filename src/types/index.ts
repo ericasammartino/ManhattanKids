@@ -23,6 +23,8 @@ export interface Location {
   "Description": string | null;
   "Street Address": string | null;
   "Address Line 2": string | null;
+  /** Cross-street hint from Manual Entry Session (e.g. "76th & Amsterdam"). */
+  "Cross Streets": string | null;
   "Neighborhood": string | null;
   "Borough": string | null;
   "Zip Code": number | null;

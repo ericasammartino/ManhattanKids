@@ -3,6 +3,8 @@ export type ActivityFilters = {
   category: string;
   subcategory: string;
   neighborhood: string;
+  /** UWS cross-street band id (e.g. "70-79") or "all". */
+  locationBand: string;
   activityType: string;
   schedulePattern: string;
   /** Child's age — program min/max must include this age. */
@@ -56,6 +58,7 @@ export function resolveActivityFilters(
     category: first(searchParams.category) ?? "all",
     subcategory: first(searchParams.subcategory) ?? "all",
     neighborhood,
+    locationBand: first(searchParams.location) ?? "all",
     activityType: first(searchParams.type) ?? defaultType,
     schedulePattern: first(searchParams.schedule) ?? "all",
     age,
