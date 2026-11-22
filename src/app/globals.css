@@ -170,14 +170,18 @@ h6 {
     0 8px 18px rgba(29, 43, 75, 0.1);
 }
 
+/* Selected = inset / pressed neumorphic (reference: selected-pill-reference.jpg). */
 .category-pill--active {
-  color: #fff;
-  background: linear-gradient(180deg, #243456 0%, #1d2b4b 100%);
-  border: 1px solid #16233d;
+  color: #374151;
+  background: linear-gradient(180deg, #e8eaee 0%, #eef0f3 55%, #f3f4f6 100%);
+  border: 1px solid rgba(209, 213, 219, 0.85);
+  border-top-color: rgba(156, 163, 175, 0.55);
+  border-bottom-color: rgba(255, 255, 255, 0.95);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.12) inset,
-    0 2px 4px rgba(29, 43, 75, 0.18),
-    0 6px 12px rgba(29, 43, 75, 0.16);
+    inset 0 3px 6px rgba(29, 43, 75, 0.14),
+    inset 0 1px 2px rgba(29, 43, 75, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .filter-chip {

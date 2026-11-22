@@ -188,9 +188,10 @@ function withResolvedNeighborhood(location: Location): Location {
 function withOrgLogo(org: Organization): Organization {
   const mapped = logoForOrganization(org["Organization Name"]);
   const existing = nonempty(org["Logo URL"]);
+  // Prefer curated local logos so asset refreshes win over stale JSON paths.
   return {
     ...org,
-    "Logo URL": existing ?? mapped,
+    "Logo URL": mapped ?? existing,
   };
 }
 
