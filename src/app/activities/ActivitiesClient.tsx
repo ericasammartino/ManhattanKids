@@ -337,16 +337,16 @@ export default function ActivitiesClient({
       </div>
 
       {showCategoryPills && (
-        <div className="mb-6 flex flex-wrap justify-start gap-2">
+        <div className="mb-6 flex flex-wrap justify-start gap-2.5">
           <button
             type="button"
             onClick={() =>
               update({ category: "all", categories: [] })
             }
-            className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
+            className={`category-pill ${
               categories.length === 0
-                ? "bg-[#1D2B4B] text-white"
-                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                ? "category-pill--active"
+                : "category-pill--idle"
             }`}
           >
             All
@@ -364,10 +364,8 @@ export default function ActivitiesClient({
                     categories: active ? [] : [c],
                   })
                 }
-                className={`rounded-full px-3.5 py-1.5 text-center text-xs font-semibold transition-colors ${
-                  active
-                    ? "bg-[#1D2B4B] text-white"
-                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                className={`category-pill ${
+                  active ? "category-pill--active" : "category-pill--idle"
                 }`}
               >
                 {c}
