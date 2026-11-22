@@ -217,7 +217,12 @@ export default function FilterProgramsPanel({
       className={`mx-auto max-w-6xl px-4 md:px-6 ${isPending ? "opacity-90" : ""}`}
       aria-label="Filter programs"
     >
-      <div className="rounded-[1.5rem] border border-[#EBDFD6] bg-[#FFF6F0] px-4 py-5 sm:px-6 sm:py-6">
+      <div
+        className="rounded-[1.5rem] border border-[#ebe4d8] px-4 py-5 sm:px-6 sm:py-6"
+        style={{
+          background: "linear-gradient(180deg, #faf6ef 0%, #f7f2e9 100%)",
+        }}
+      >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 text-[15px] font-bold text-[#1D2B4B]">
             <SlidersHorizontal className="h-4 w-4" aria-hidden />

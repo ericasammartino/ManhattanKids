@@ -22,6 +22,7 @@ import {
 } from "@/lib/activity-filters";
 import { LOCATION_BANDS } from "@/lib/location-bands";
 import { RESULT_PILL_CATEGORIES } from "@/lib/taxonomy";
+import { calendarDayKey, shuffleForDay } from "@/lib/daily-shuffle";
 import ActivityCard from "@/components/ActivityCard";
 import GroupedActivityCard from "@/components/GroupedActivityCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -267,7 +268,17 @@ export default function ActivitiesClient({
     [filters, writeUrl]
   );
 
-  const filtered = filterActivities(activities, filters);
+  // Daily-seeded shuffle of the full list, then filter (preserves relative
+  // order) so filtered results stay mixed but stable across refreshes.
+  const dayKey = useMemo(() => calendarDayKey(), []);
+  const shuffledActivities = useMemo(
+    () => shuffleForDay(activities, dayKey),
+    [activities, dayKey]
+  );
+  const filtered = useMemo(
+    () => filterActivities(shuffledActivities, filters),
+    [shuffledActivities, filters]
+  );
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
