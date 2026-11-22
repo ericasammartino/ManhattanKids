@@ -21,6 +21,7 @@ import {
   sessionRunsOnDay,
   splitSubcategories,
 } from "@/lib/taxonomy";
+import { locationBandIdFromCrossStreets } from "@/lib/location-bands";
 
 /** Match category filter against single or multi-tag Primary Category values. */
 function activityMatchesCategory(
@@ -375,6 +376,8 @@ export type FilterState = {
   category: string;
   subcategory: string;
   neighborhood: string;
+  /** UWS cross-street band id (e.g. "70-79") or "all". */
+  locationBand: string;
   /** Child's age — program must include this age in [min, max] inclusive. */
   age: number | null;
   ageMin: number | null;
@@ -459,6 +462,13 @@ export function filterActivities(
         resolveNeighborhood(activity.location) ??
         nonempty(activity.location?.["Neighborhood"]);
       if (neighborhood !== filters.neighborhood) return false;
+    }
+
+    if (filters.locationBand && filters.locationBand !== "all") {
+      const band = locationBandIdFromCrossStreets(
+        activity.location?.["Cross Streets"]
+      );
+      if (band !== filters.locationBand) return false;
     }
 
     // Prefer explicit child's age (inclusive between program min/max).

@@ -31,6 +31,7 @@ import {
   Check,
   ChevronDown,
   Copy,
+  ExternalLink,
   MapPin,
   Users,
 } from "lucide-react";
@@ -88,10 +89,18 @@ export default function GroupedActivityCard({ activity }: Props) {
     activity["Age Maximum"]
   );
   const daySummary = shortDaySummary(collectSessionDays(sessions));
+  const crossStreets = activity.location?.["Cross Streets"]?.trim() || "";
   const locationLabel =
+    crossStreets ||
     activity.location?.["Location Name"]?.trim() ||
     activity.location?.["Neighborhood"]?.trim() ||
     activity["Default Location Name"]?.trim() ||
+    "";
+  const website =
+    activity.organization?.Website?.trim() ||
+    activity["Registration URL"]?.trim() ||
+    activity["Source URL"]?.trim() ||
+    activity.location?.Website?.trim() ||
     "";
   const fromPrice = minPriceAmount(sessions);
   const priceNote = pricingFootnote(sessions);
@@ -183,6 +192,28 @@ export default function GroupedActivityCard({ activity }: Props) {
                 <span className="text-[11px] text-gray-500">{dateRange}</span>
               )}
             </div>
+            {locationLabel && (
+              <p className="mt-2 inline-flex min-w-0 items-center gap-1.5 text-[12px] text-gray-600">
+                <MapPin
+                  className="h-3.5 w-3.5 flex-shrink-0 text-gray-500"
+                  aria-hidden
+                />
+                <span className="truncate">{locationLabel}</span>
+              </p>
+            )}
+            {website && (
+              <a
+                href={website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex max-w-full items-center gap-1.5 text-[12px] font-semibold text-[#1D2B4B] hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+                <span className="truncate">
+                  {website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                </span>
+              </a>
+            )}
           </div>
 
           <div className="mt-3">

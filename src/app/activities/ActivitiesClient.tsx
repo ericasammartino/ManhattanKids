@@ -19,6 +19,7 @@ import {
   resolveActivityFilters,
   type ActivityFilters,
 } from "@/lib/activity-filters";
+import { LOCATION_BANDS } from "@/lib/location-bands";
 import ActivityCard from "@/components/ActivityCard";
 import GroupedActivityCard from "@/components/GroupedActivityCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -68,6 +69,7 @@ function buildQuery(filters: ActivityFilters): string {
   }
   // Neighborhood UI removed — always browse all.
   params.set("neighborhood", "all");
+  if (filters.locationBand !== "all") params.set("location", filters.locationBand);
   if (filters.activityType !== "all") params.set("type", filters.activityType);
   if (filters.schedulePattern !== "all") {
     params.set("schedule", filters.schedulePattern);
@@ -83,6 +85,7 @@ function sameFilters(a: ActivityFilters, b: ActivityFilters): boolean {
     a.category === b.category &&
     a.subcategory === b.subcategory &&
     a.neighborhood === b.neighborhood &&
+    a.locationBand === b.locationBand &&
     a.activityType === b.activityType &&
     a.schedulePattern === b.schedulePattern &&
     a.day === b.day &&
@@ -113,6 +116,7 @@ export default function ActivitiesClient({
   const [category, setCategory] = useState(initialFilters.category);
   const [subcategory, setSubcategory] = useState(initialFilters.subcategory);
   const [neighborhood, setNeighborhood] = useState(initialFilters.neighborhood);
+  const [locationBand, setLocationBand] = useState(initialFilters.locationBand);
   const [activityType, setActivityType] = useState(initialFilters.activityType);
   const [schedulePattern, setSchedulePattern] = useState(
     initialFilters.schedulePattern
@@ -124,6 +128,7 @@ export default function ActivitiesClient({
   const [showFilters, setShowFilters] = useState(
     initialFilters.schedulePattern !== "all" ||
       initialFilters.subcategory !== "all" ||
+      initialFilters.locationBand !== "all" ||
       initialFilters.day !== "all" ||
       initialFilters.age !== null ||
       initialFilters.ageMin !== null ||
@@ -138,6 +143,7 @@ export default function ActivitiesClient({
       category,
       subcategory,
       neighborhood,
+      locationBand,
       activityType,
       schedulePattern,
       day,
@@ -150,6 +156,7 @@ export default function ActivitiesClient({
       category,
       subcategory,
       neighborhood,
+      locationBand,
       activityType,
       schedulePattern,
       day,
@@ -164,6 +171,7 @@ export default function ActivitiesClient({
     setCategory(next.category);
     setSubcategory(next.subcategory);
     setNeighborhood(next.neighborhood);
+    setLocationBand(next.locationBand);
     setActivityType(next.activityType);
     setSchedulePattern(next.schedulePattern);
     setDay(next.day);
@@ -215,6 +223,7 @@ export default function ActivitiesClient({
       if (patch.category !== undefined) setCategory(patch.category);
       if (patch.subcategory !== undefined) setSubcategory(patch.subcategory);
       if (patch.neighborhood !== undefined) setNeighborhood(patch.neighborhood);
+      if (patch.locationBand !== undefined) setLocationBand(patch.locationBand);
       if (patch.activityType !== undefined) setActivityType(patch.activityType);
       if (patch.schedulePattern !== undefined) {
         setSchedulePattern(patch.schedulePattern);
@@ -247,6 +256,7 @@ export default function ActivitiesClient({
     Boolean(search.trim()) ||
     category !== "all" ||
     subcategory !== "all" ||
+    locationBand !== "all" ||
     activityType !== defaultType ||
     schedulePattern !== "all" ||
     day !== "all" ||
@@ -260,6 +270,7 @@ export default function ActivitiesClient({
       category: "all",
       subcategory: "all",
       neighborhood: "all",
+      locationBand: "all",
       activityType: defaultType,
       schedulePattern: "all",
       day: "all",
@@ -288,17 +299,6 @@ export default function ActivitiesClient({
         groupedCards ? "max-w-7xl" : "max-w-6xl"
       } mx-auto px-4 py-8 ${isPending ? "opacity-90" : ""}`}
     >
-      {subtitle && (
-        <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-100">
-          <div className="font-semibold text-green-900 text-sm text-center">
-            {isAfterschoolTab ? "Afterschool Programs" : title}
-          </div>
-          <div className="text-green-700 text-xs mt-0.5 text-center">
-            {subtitle}
-          </div>
-        </div>
-      )}
-
       <div className="mb-6 text-center sm:text-left">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">{title}</h1>
         <p className="text-gray-500 text-sm">
@@ -439,6 +439,25 @@ export default function ActivitiesClient({
                 {DAY_OPTIONS.map((d) => (
                   <option key={d} value={d}>
                     {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Location
+              </label>
+              <select
+                name="location"
+                value={locationBand}
+                onChange={(e) => update({ locationBand: e.target.value })}
+                className={filterSelectClass}
+              >
+                <option value="all">Any blocks</option>
+                {LOCATION_BANDS.map((band) => (
+                  <option key={band.id} value={band.id}>
+                    {band.label}
                   </option>
                 ))}
               </select>

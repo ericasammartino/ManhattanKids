@@ -68,7 +68,6 @@ export default async function Home({ searchParams }: Props) {
         <ActivitiesClient
           activities={programs}
           title="Afterschool Programs"
-          subtitle="Browse enrichment classes, sports, STEM, arts, and more on the UWS."
           defaultType="Afterschool Program"
           defaultNeighborhood="all"
           emptyLabel="afterschool programs"
