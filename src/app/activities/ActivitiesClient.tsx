@@ -309,6 +309,8 @@ export default function ActivitiesClient({
         </p>
       </div>
 
+      {/* Homepage afterschool browse uses the hero SearchBar; skip the duplicate listing search. */}
+      {!isAfterschoolTab && (
       <form
         method="get"
         action={pathname}
@@ -526,34 +528,7 @@ export default function ActivitiesClient({
           </div>
         )}
       </form>
-
-      <div className="mb-6 flex flex-wrap justify-center gap-2 sm:justify-start">
-        <button
-          type="button"
-          onClick={() => update({ category: "all" })}
-          className={`rounded-full px-3 py-1.5 text-center text-xs font-semibold transition-colors ${
-            category === "all"
-              ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          All
-        </button>
-        {CATEGORIES.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => update({ category: category === c ? "all" : c })}
-            className={`rounded-full px-3 py-1.5 text-center text-xs font-semibold transition-colors ${
-              category === c
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-16">
