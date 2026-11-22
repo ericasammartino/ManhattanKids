@@ -26,12 +26,12 @@ export default async function Home({ searchParams }: Props) {
             <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.14em] text-[#E67E22] md:text-[13px]">
               Upper West Side
             </p>
-            <h1 className="max-w-[16ch] text-[2.4rem] font-extrabold leading-[1.05] tracking-tight text-[#1D2B4B] md:text-[3.15rem]">
-              The Best Kids&apos; Activities on the UWS
+            <h1 className="max-w-[18ch] text-[2.35rem] font-extrabold leading-[1.08] tracking-tight text-[#1D2B4B] md:text-[3.1rem]">
+              Find Their Next Favorite Afterschool Activity.
             </h1>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted md:text-base">
-              Classes, camps, museums, events and more. All in one place for NYC
-              families.
+            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted md:text-base">
+              Discover afterschool classes and programs on the Upper West Side.
+              From sports and STEM to art, music, and everything in between.
             </p>
             <div className="mt-7">
               <HeroSearch resultsPath="/" />

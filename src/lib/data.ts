@@ -378,6 +378,13 @@ export type FilterState = {
   neighborhood: string;
   /** UWS cross-street band id (e.g. "70-79") or "all". */
   locationBand: string;
+  categories?: string[];
+  subcategories?: string[];
+  locationBands?: string[];
+  days?: string[];
+  ages?: number[];
+  activityTypes?: string[];
+  schedulePatterns?: string[];
   /** Child's age — program must include this age in [min, max] inclusive. */
   age: number | null;
   ageMin: number | null;
@@ -440,21 +447,30 @@ export function filterActivities(
       return false;
     }
 
-    if (filters.category && filters.category !== "all") {
-      if (!activityMatchesCategory(activity["Primary Category"], filters.category)) {
-        return false;
-      }
+    const categories =
+      filters.categories && filters.categories.length > 0
+        ? filters.categories
+        : filters.category && filters.category !== "all"
+          ? [filters.category]
+          : [];
+    if (categories.length > 0) {
+      const match = categories.some((c) =>
+        activityMatchesCategory(activity["Primary Category"], c)
+      );
+      if (!match) return false;
     }
 
-    if (filters.subcategory && filters.subcategory !== "all") {
-      if (
-        !activityMatchesSubcategory(
-          activity["Subcategory"],
-          filters.subcategory
-        )
-      ) {
-        return false;
-      }
+    const subcategories =
+      filters.subcategories && filters.subcategories.length > 0
+        ? filters.subcategories
+        : filters.subcategory && filters.subcategory !== "all"
+          ? [filters.subcategory]
+          : [];
+    if (subcategories.length > 0) {
+      const match = subcategories.some((s) =>
+        activityMatchesSubcategory(activity["Subcategory"], s)
+      );
+      if (!match) return false;
     }
 
     if (filters.neighborhood && filters.neighborhood !== "all") {
@@ -464,25 +480,32 @@ export function filterActivities(
       if (neighborhood !== filters.neighborhood) return false;
     }
 
-    if (filters.locationBand && filters.locationBand !== "all") {
+    const locationBands =
+      filters.locationBands && filters.locationBands.length > 0
+        ? filters.locationBands
+        : filters.locationBand && filters.locationBand !== "all"
+          ? [filters.locationBand]
+          : [];
+    if (locationBands.length > 0) {
       const band = locationBandIdFromCrossStreets(
         activity.location?.["Cross Streets"]
       );
-      if (band !== filters.locationBand) return false;
+      if (!band || !locationBands.includes(band)) return false;
     }
 
-    // Prefer explicit child's age (inclusive between program min/max).
-    const childAge =
-      filters.age !== null && filters.age !== undefined
-        ? filters.age
-        : filters.ageMin !== null &&
-            filters.ageMin !== undefined &&
-            (filters.ageMax === null || filters.ageMax === undefined)
-          ? filters.ageMin
-          : null;
+    const ages =
+      filters.ages && filters.ages.length > 0
+        ? filters.ages
+        : filters.age !== null && filters.age !== undefined
+          ? [filters.age]
+          : filters.ageMin !== null &&
+              filters.ageMin !== undefined &&
+              (filters.ageMax === null || filters.ageMax === undefined)
+            ? [filters.ageMin]
+            : [];
 
-    if (childAge !== null) {
-      if (!activityMatchesAge(activity, childAge)) return false;
+    if (ages.length > 0) {
+      if (!ages.some((a) => activityMatchesAge(activity, a))) return false;
     } else {
       // Legacy range overlap (homepage used to send ageMin+ageMax buckets).
       if (filters.ageMin !== null && filters.ageMin !== undefined) {
@@ -495,17 +518,36 @@ export function filterActivities(
       }
     }
 
-    if (filters.activityType && filters.activityType !== "all") {
-      if (nonempty(activity["Activity Type"]) !== filters.activityType) return false;
+    const activityTypes =
+      filters.activityTypes && filters.activityTypes.length > 0
+        ? filters.activityTypes
+        : filters.activityType && filters.activityType !== "all"
+          ? [filters.activityType]
+          : [];
+    if (activityTypes.length > 0) {
+      const type = nonempty(activity["Activity Type"]);
+      if (!type || !activityTypes.includes(type)) return false;
     }
 
-    if (filters.schedulePattern && filters.schedulePattern !== "all") {
-      if (nonempty(activity["Schedule Pattern"]) !== filters.schedulePattern)
-        return false;
+    const schedulePatterns =
+      filters.schedulePatterns && filters.schedulePatterns.length > 0
+        ? filters.schedulePatterns
+        : filters.schedulePattern && filters.schedulePattern !== "all"
+          ? [filters.schedulePattern]
+          : [];
+    if (schedulePatterns.length > 0) {
+      const pattern = nonempty(activity["Schedule Pattern"]);
+      if (!pattern || !schedulePatterns.includes(pattern)) return false;
     }
 
-    if (filters.day && filters.day !== "all") {
-      if (!activityRunsOnDay(activity, filters.day)) return false;
+    const days =
+      filters.days && filters.days.length > 0
+        ? filters.days
+        : filters.day && filters.day !== "all"
+          ? [filters.day]
+          : [];
+    if (days.length > 0) {
+      if (!days.some((d) => activityRunsOnDay(activity, d))) return false;
     }
 
     return true;
