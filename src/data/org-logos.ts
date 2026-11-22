@@ -4,8 +4,8 @@
  */
 export const ORG_LOGOS: Record<string, string> = {
   "Marlene Meyerson JCC Manhattan": "/logos/marlene-meyerson-jcc.png",
-  "West Side YMCA Y Afterschool": "/logos/ymca.jpg",
-  "West Side YMCA": "/logos/ymca.jpg",
+  "West Side YMCA Y Afterschool": "/logos/ymca.png",
+  "West Side YMCA": "/logos/ymca.png",
   "Children’s Aid-Frederick Douglass Community Center":
     "/logos/childrens-aid.png",
   "Children's Aid-Frederick Douglass Community Center":
@@ -18,14 +18,15 @@ export const ORG_LOGOS: Record<string, string> = {
   Robofun: "/logos/robofun.png",
   ZPlaySchool: "/logos/z-play.jpg",
   "Writopia Lab Upper West Side": "/logos/writopia-lab.png",
-  "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.jpg",
-  "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.jpg",
+  "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.png",
+  "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.png",
   "Elliott’s Classes": "/logos/elliotts-classes.png",
   "Elliott's Classes": "/logos/elliotts-classes.png",
   "FunFit Kids": "/logos/funfit.png",
-  "Central Park Tennis Center": "/logos/central-park-tennis.jpg",
+  "Central Park Tennis Center": "/logos/central-park-tennis.png",
   "Discovery Programs": "/logos/discovery-programs.png",
   "Harmony By Karate": "/logos/harmony-by-karate.png",
+  "Broadway TaeKwonDo": "/logos/broadway-taekwondo.png",
   "Broadway Dance Center Children & Teens": "/logos/broadway-dance-center.png",
   "Play On! Studios": "/logos/play-on-studios.png",
   "The Art Farm": "/logos/the-art-farm.png",
@@ -51,7 +52,7 @@ export const ORG_LOGOS: Record<string, string> = {
 function normalizeOrgName(name: string): string {
   return name
     .normalize("NFKC")
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u2018\u2019\u201A\u201B']/g, "'")
     .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
     .replace(/\s+/g, " ")
     .trim()
