@@ -260,6 +260,20 @@ export function resolveActivityImage(activity: EnrichedActivity): {
   };
 }
 
+/** Normalize punctuation so “Elliott’s” matches “elliott's” / “elliotts”. */
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u2018\u2019\u201A\u2032`']/g, "")
+    .replace(/[\u201C\u201D\u201E"]/g, "")
+    .replace(/[\u2013\u2014—–-]+/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function activitySearchText(activity: EnrichedActivity): string {
   const parts = [
     activity["Activity Name"],
@@ -271,6 +285,7 @@ function activitySearchText(activity: EnrichedActivity): string {
     activity["Seasonal Tags"],
     activity["Default Location Name"],
     activity["Notes"],
+    // Provider / org names are first-class search targets (not just class titles).
     activity.organization?.["Organization Name"],
     activity.organization?.["Organization Type"],
     activity.organization?.["Description"],
@@ -280,16 +295,17 @@ function activitySearchText(activity: EnrichedActivity): string {
     activity.location?.["Zip Code"],
     activity.location?.["Description"],
   ];
-  return parts
-    .map((p) => nonempty(p) ?? "")
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  return normalizeSearchText(
+    parts
+      .map((p) => nonempty(p) ?? "")
+      .filter(Boolean)
+      .join(" ")
+  );
 }
 
 /** Every whitespace-separated token must appear somewhere in the searchable text. */
 export function matchesSearch(activity: EnrichedActivity, query: string): boolean {
-  const q = query.trim().toLowerCase();
+  const q = normalizeSearchText(query);
   if (!q) return true;
   const haystack = activitySearchText(activity);
   const tokens = q.split(/\s+/).filter(Boolean);

@@ -97,14 +97,26 @@ export default function SearchBar({
             className="hero-search w-full rounded-full py-2.5 pl-9 pr-12 text-sm placeholder:text-foreground/55 focus:outline-none"
             autoComplete="off"
           />
-          <button
-            type="submit"
-            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: ARROW_FILL }}
-            aria-label="Search"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          {query.trim() ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: ARROW_FILL }}
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: ARROW_FILL }}
+              aria-label="Search"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </form>
     );
@@ -141,14 +153,26 @@ export default function SearchBar({
         )}
         {day !== "all" && <input type="hidden" name="day" value={day} />}
         {age && <input type="hidden" name="age" value={age} />}
-        <button
-          type="submit"
-          className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: ARROW_FILL }}
-          aria-label="Search"
-        >
-          <ArrowRight className="h-[18px] w-[18px]" />
-        </button>
+        {query.trim() ? (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: ARROW_FILL }}
+            aria-label="Clear search"
+          >
+            <X className="h-[18px] w-[18px]" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: ARROW_FILL }}
+            aria-label="Search"
+          >
+            <ArrowRight className="h-[18px] w-[18px]" />
+          </button>
+        )}
       </form>
 
       <div className="mt-3.5 flex flex-wrap justify-center gap-2">
