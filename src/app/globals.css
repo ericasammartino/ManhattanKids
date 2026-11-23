@@ -108,7 +108,7 @@ h6 {
   outline: none;
 }
 
-/* Expanded class card — playful price underline (LCL gold accent). */
+/* Expanded class card — soft warm header wash. */
 .open-class-card__header::before {
   content: "";
   position: absolute;
@@ -119,23 +119,6 @@ h6 {
     radial-gradient(ellipse 80% 90% at 85% 20%, rgba(246, 179, 70, 0.12), transparent 55%),
     radial-gradient(ellipse 60% 80% at 12% 0%, rgba(255, 246, 240, 0.9), transparent 50%);
   border-radius: 1.35rem 1.35rem 0 0;
-}
-
-.open-class-card__price {
-  position: relative;
-  display: inline-block;
-}
-
-.open-class-card__price::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 4%;
-  bottom: -2px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(246, 179, 70, 0.55);
-  transform: skewX(-8deg);
 }
 
 /* Afterschool category pills — soft float + raised bevel (no icons). */

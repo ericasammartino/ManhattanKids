@@ -16,11 +16,8 @@ import {
 } from "@/lib/taxonomy";
 import {
   collectSessionDays,
-  estimatedPriceForSelection,
   formatSessionTimeRange,
-  maxSelectableClassTimes,
   minPriceAmount,
-  pricingFootnote,
   sessionDurationMinutes,
   sessionSeasonMeta,
   sortSessionsByDay,
@@ -28,9 +25,7 @@ import {
 import OrgLogoMark from "@/components/OrgLogoMark";
 import {
   Calendar,
-  Check,
   ChevronDown,
-  Copy,
   ExternalLink,
   MapPin,
   Users,
@@ -73,8 +68,6 @@ export default function GroupedActivityCard({ activity }: Props) {
     [activity.sessions]
   );
   const [expanded, setExpanded] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
 
   const category = displayPrimaryCategory(activity["Primary Category"]);
   const subcategory = displaySubcategory(activity.Subcategory);
@@ -103,72 +96,11 @@ export default function GroupedActivityCard({ activity }: Props) {
     activity.location?.Website?.trim() ||
     "";
   const fromPrice = minPriceAmount(sessions);
-  const priceNote = pricingFootnote(sessions);
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const { seasonBadge, dateRange } = sessionSeasonMeta(sessions);
-  const maxSelect = maxSelectableClassTimes(sessions);
-
-  const estimate = estimatedPriceForSelection(
-    sessions,
-    Math.max(1, selectedIds.length)
-  );
 
   function toggleExpanded() {
-    setExpanded((prev) => {
-      const next = !prev;
-      if (next && selectedIds.length === 0 && sessions[0]) {
-        setSelectedIds([sessions[0]["Session ID"]]);
-      }
-      return next;
-    });
-  }
-
-  function toggleSession(sessionId: string) {
-    setSelectedIds((prev) => {
-      if (prev.includes(sessionId)) {
-        if (prev.length <= 1) return prev;
-        return prev.filter((id) => id !== sessionId);
-      }
-      if (maxSelect <= 1) return [sessionId];
-      if (prev.length >= maxSelect) {
-        return [...prev.slice(1), sessionId];
-      }
-      return [...prev, sessionId];
-    });
-  }
-
-  async function copySelection() {
-    const chosen = sessions.filter((s) =>
-      selectedIds.includes(s["Session ID"])
-    );
-    const lines = [
-      activity["Activity Name"],
-      provider,
-      ageRange,
-      seasonBadge && dateRange
-        ? `${seasonBadge} · ${dateRange}`
-        : seasonBadge || dateRange || "",
-      "",
-      "Class times:",
-      ...chosen.map((s) => {
-        const day = parseDaysOfWeek(s["Days of the Week"])[0] ?? "Day";
-        const time = formatSessionTimeRange(s["Start Time"], s["End Time"]);
-        return `• ${day} ${time}`;
-      }),
-      estimate.amount != null
-        ? `\nEstimated session price: $${estimate.amount} (${estimate.label})`
-        : "",
-    ]
-      .filter((line) => line !== null)
-      .join("\n");
-
-    try {
-      await navigator.clipboard.writeText(lines.trim());
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
+    setExpanded((prev) => !prev);
   }
 
   if (expanded) {
@@ -203,28 +135,18 @@ export default function GroupedActivityCard({ activity }: Props) {
 
             <div className="min-w-0 flex-1 pt-0.5">
               {taxonomyPill && (
-                <span className="inline-flex max-w-full truncate rounded-full bg-[#1D2B4B] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white">
+                <span className="inline-flex max-w-full truncate rounded-full bg-[#EDE4F5] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#6B4C8A]">
                   {taxonomyPill}
                 </span>
               )}
-              <div className="mt-2 flex items-start gap-2">
-                <h3 className="min-w-0 text-[1.05rem] font-extrabold leading-snug tracking-tight text-[#1D2B4B] sm:text-[1.15rem]">
-                  <Link
-                    href={`/activities/${activity["Activity ID"]}`}
-                    className="hover:underline"
-                  >
-                    {activity["Activity Name"]}
-                  </Link>
-                </h3>
-                <span
-                  className="mt-1 flex flex-shrink-0 flex-col gap-[3px]"
-                  aria-hidden
+              <h3 className="mt-2 text-[1.05rem] font-extrabold leading-snug tracking-tight text-[#1D2B4B] sm:text-[1.15rem]">
+                <Link
+                  href={`/activities/${activity["Activity ID"]}`}
+                  className="hover:underline"
                 >
-                  <span className="h-[2px] w-3 rounded-full bg-[#F6B346]" />
-                  <span className="h-[2px] w-2 rounded-full bg-[#F6B346]/80" />
-                  <span className="h-[2px] w-2.5 rounded-full bg-[#F6B346]/60" />
-                </span>
-              </div>
+                  {activity["Activity Name"]}
+                </Link>
+              </h3>
             </div>
           </div>
 
@@ -272,46 +194,30 @@ export default function GroupedActivityCard({ activity }: Props) {
             </a>
           )}
 
-          {/* Class-time chooser */}
-          <div className="relative z-[1]">
-            <h4 className="text-[13px] font-bold text-[#1D2B4B]">
-              Choose a class time
-            </h4>
-            <ul className="mt-2.5 space-y-2">
-              {sessions.map((session) => {
-                const id = session["Session ID"];
-                const selected = selectedIds.includes(id);
-                const day =
-                  parseDaysOfWeek(session["Days of the Week"])[0] ?? "Day TBA";
-                const time = formatSessionTimeRange(
-                  session["Start Time"],
-                  session["End Time"]
-                );
-                const mins = sessionDurationMinutes(
-                  session["Start Time"],
-                  session["End Time"]
-                );
-                return (
-                  <li key={id}>
-                    <button
-                      type="button"
-                      onClick={() => toggleSession(id)}
-                      className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                        selected
-                          ? "border-[#C9D8E8] bg-[#F3F8FB]"
-                          : "border-[#E8E2D8] bg-white hover:border-[#D5D0C8]"
-                      }`}
+          {/* Plain class-time schedule (non-interactive) */}
+          {sessions.length > 0 && (
+            <div className="relative z-[1]">
+              <h4 className="text-[13px] font-bold text-[#1D2B4B]">
+                Class times
+              </h4>
+              <ul className="mt-2.5 space-y-2">
+                {sessions.map((session) => {
+                  const id = session["Session ID"];
+                  const day =
+                    parseDaysOfWeek(session["Days of the Week"])[0] ?? "Day TBA";
+                  const time = formatSessionTimeRange(
+                    session["Start Time"],
+                    session["End Time"]
+                  );
+                  const mins = sessionDurationMinutes(
+                    session["Start Time"],
+                    session["End Time"]
+                  );
+                  return (
+                    <li
+                      key={id}
+                      className="flex w-full items-center gap-3 rounded-xl border border-[#E8E2D8] bg-[#FBF9F6] px-3 py-2.5"
                     >
-                      <span
-                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
-                          selected
-                            ? "border-[#1D2B4B] bg-[#1D2B4B] text-white"
-                            : "border-[#C9C4BB] bg-white"
-                        }`}
-                        aria-hidden
-                      >
-                        {selected ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
-                      </span>
                       <span className="min-w-0 flex-1 text-[13px] font-semibold text-[#1D2B4B]">
                         {day}
                       </span>
@@ -323,47 +229,12 @@ export default function GroupedActivityCard({ activity }: Props) {
                           {mins} min
                         </span>
                       )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="mt-2 text-[10px] leading-snug text-[#9CA3AF]">
-              {maxSelect > 1
-                ? `Select up to ${maxSelect} days. Example schedule selection; not a live registration system.`
-                : "Example schedule selection; not a live registration system."}
-            </p>
-          </div>
-
-          {/* Footer: price + CTA */}
-          <div className="relative z-[1] mt-auto flex flex-wrap items-end justify-between gap-3 border-t border-[#EEE9E1] pt-4">
-            <div>
-              <p className="text-[1.15rem] font-extrabold tracking-tight text-[#1D2B4B] sm:text-[1.25rem]">
-                {estimate.amount != null ? (
-                  <>
-                    <span className="open-class-card__price">
-                      From ${estimate.amount}
-                    </span>
-                    <span className="font-bold text-[#1D2B4B]/80"> / session</span>
-                  </>
-                ) : (
-                  "See provider"
-                )}
-              </p>
-              <p className="mt-0.5 text-[11px] text-[#6B6578]">
-                {estimate.label}
-                {priceNote ? ` · ${priceNote.replace(/ pricing$/i, "")}` : ""}
-              </p>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-            <button
-              type="button"
-              onClick={copySelection}
-              className="inline-flex items-center gap-2 rounded-full bg-[#1D2B4B] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_6px_14px_rgba(29,43,75,0.2)] transition-opacity hover:opacity-90"
-            >
-              <Copy className="h-4 w-4" />
-              {copied ? "Copied" : "Copy selection"}
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="flex justify-center pb-3 pt-0">
