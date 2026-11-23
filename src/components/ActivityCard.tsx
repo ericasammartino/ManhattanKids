@@ -9,7 +9,7 @@ import {
 } from "@/lib/data";
 import { normalizePrimaryCategory } from "@/lib/taxonomy";
 import { MapPin, Clock, Calendar } from "lucide-react";
-import ActivityImage from "@/components/ActivityImage";
+import OrgLogoMark from "@/components/OrgLogoMark";
 
 interface Props {
   activity: EnrichedActivity;
@@ -23,13 +23,26 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
     normalizePrimaryCategory(activity["Primary Category"]) ?? "default";
   const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
   const icon = CATEGORY_ICONS[category] ?? "🎯";
-  const { src: imgSrc, isLogo } = resolveActivityImage(activity);
+  const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const imgClass = isLogo
     ? "w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
     : "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300";
-  const imgWrapClass = isLogo
-    ? "relative overflow-hidden bg-[#f3eee4]"
-    : "relative overflow-hidden bg-gray-100";
+  const imgWrapClass =
+    isLogo || textFallback
+      ? "relative overflow-hidden bg-[#f3eee4]"
+      : "relative overflow-hidden bg-gray-100";
+  const logoMark = (
+    <OrgLogoMark
+      src={imgSrc}
+      alt={
+        activity.organization?.["Organization Name"] ?? activity["Activity Name"]
+      }
+      textFallback={textFallback}
+      isLogo={isLogo}
+      className={imgClass}
+      textClassName="text-sm sm:text-base px-4"
+    />
+  );
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
   const locationName = activity.location?.["Location Name"] ?? activity["Default Location Name"] ?? "";
   const neighborhood = activity.location?.["Neighborhood"];
@@ -39,13 +52,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
     return (
       <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
         <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
-          <div className={`${imgWrapClass} h-44`}>
-            <ActivityImage
-              src={imgSrc}
-              alt={activity.organization?.["Organization Name"] ?? activity["Activity Name"]}
-              className={imgClass}
-            />
-          </div>
+          <div className={`${imgWrapClass} h-44`}>{logoMark}</div>
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
               {activity["Activity Name"]}
@@ -79,13 +86,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
     return (
       <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
         <div className="relative overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
-          <div className={`${imgWrapClass} h-32`}>
-            <ActivityImage
-              src={imgSrc}
-              alt={activity.organization?.["Organization Name"] ?? activity["Activity Name"]}
-              className={isLogo ? "w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" : imgClass}
-            />
-          </div>
+          <div className={`${imgWrapClass} h-32`}>{logoMark}</div>
           <div className="p-3">
             <p className="font-medium text-sm text-gray-900 leading-tight line-clamp-2 mb-1">
               {activity["Activity Name"]}
@@ -106,11 +107,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
     <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
       <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 overflow-hidden">
         <div className={`${imgWrapClass} h-48`}>
-          <ActivityImage
-            src={imgSrc}
-            alt={activity.organization?.["Organization Name"] ?? activity["Activity Name"]}
-            className={imgClass}
-          />
+          {logoMark}
           {category && category !== "default" && (
             <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
               {icon} {category}
