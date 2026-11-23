@@ -261,7 +261,7 @@ export function resolveActivityImage(activity: EnrichedActivity): {
 }
 
 /** Normalize punctuation so “Elliott’s” matches “elliott's” / “elliotts”. */
-function normalizeSearchText(value: string): string {
+export function normalizeSearchText(value: string): string {
   return value
     .toLowerCase()
     .normalize("NFKD")
@@ -272,6 +272,51 @@ function normalizeSearchText(value: string): string {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function compactSearchText(value: string): string {
+  return normalizeSearchText(value).replace(/\s+/g, "");
+}
+
+/** Light edit distance for near-miss tokens (elliots ≈ elliotts). */
+function editDistanceAtMost(a: string, b: string, max: number): boolean {
+  if (Math.abs(a.length - b.length) > max) return false;
+  if (a === b) return true;
+  const m = a.length;
+  const n = b.length;
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    let rowMin = curr[0];
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost
+      );
+      if (curr[j] < rowMin) rowMin = curr[j];
+    }
+    if (rowMin > max) return false;
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n] <= max;
+}
+
+function tokenFuzzyMatch(token: string, haystack: string): boolean {
+  if (!token) return true;
+  if (haystack.includes(token)) return true;
+  // Near-miss only for longer tokens so short noise ("y", "a") stays strict.
+  if (token.length < 4) return false;
+  const words = haystack.split(/\s+/).filter(Boolean);
+  const max = token.length >= 8 ? 2 : 1;
+  return words.some(
+    (word) =>
+      Math.abs(word.length - token.length) <= max &&
+      editDistanceAtMost(token, word, max)
+  );
 }
 
 function activitySearchText(activity: EnrichedActivity): string {
@@ -303,13 +348,64 @@ function activitySearchText(activity: EnrichedActivity): string {
   );
 }
 
-/** Every whitespace-separated token must appear somewhere in the searchable text. */
+function organizationSearchText(activity: EnrichedActivity): string {
+  return normalizeSearchText(
+    [
+      activity.organization?.["Organization Name"],
+      activity["Default Location Name"],
+      activity.location?.["Location Name"],
+    ]
+      .map((p) => nonempty(p) ?? "")
+      .filter(Boolean)
+      .join(" ")
+  );
+}
+
+/**
+ * Match title + org/provider names.
+ * Supports substring, compacted near-misses ("westside" → "west side"),
+ * and light fuzzy token matching so org near-misses still hit.
+ */
 export function matchesSearch(activity: EnrichedActivity, query: string): boolean {
   const q = normalizeSearchText(query);
   if (!q) return true;
+
   const haystack = activitySearchText(activity);
+  const orgText = organizationSearchText(activity);
+  const title = normalizeSearchText(activity["Activity Name"] ?? "");
+  const compactQ = compactSearchText(query);
+  const compactOrg = compactSearchText(
+    [
+      activity.organization?.["Organization Name"],
+      activity["Default Location Name"],
+      activity.location?.["Location Name"],
+    ]
+      .map((p) => nonempty(p) ?? "")
+      .filter(Boolean)
+      .join(" ")
+  );
+  const compactTitle = compactSearchText(activity["Activity Name"] ?? "");
+  const compactHay = compactSearchText(haystack);
+
+  // Phrase / substring hits (org first, then title, then full haystack).
+  if (orgText.includes(q) || title.includes(q) || haystack.includes(q)) {
+    return true;
+  }
+  if (
+    compactQ.length >= 3 &&
+    (compactOrg.includes(compactQ) ||
+      compactTitle.includes(compactQ) ||
+      compactHay.includes(compactQ))
+  ) {
+    return true;
+  }
+
   const tokens = q.split(/\s+/).filter(Boolean);
-  return tokens.every((token) => haystack.includes(token));
+  // Prefer org-name token match so provider queries don't require title hits.
+  if (orgText && tokens.every((token) => tokenFuzzyMatch(token, orgText))) {
+    return true;
+  }
+  return tokens.every((token) => tokenFuzzyMatch(token, haystack));
 }
 
 export const AFTERSCHOOL_ACTIVITY_TYPE = "Afterschool Program";

@@ -15,8 +15,8 @@ import {
 } from "@/lib/taxonomy";
 import {
   collectSessionDays,
+  formatPriceWithFrequency,
   formatSessionTimeRange,
-  minPriceAmount,
   sessionDurationMinutes,
   sessionSeasonMeta,
   sortSessionsByDay,
@@ -101,7 +101,7 @@ export default function GroupedActivityCard({
     activity["Source URL"]?.trim() ||
     activity.location?.Website?.trim() ||
     "";
-  const fromPrice = minPriceAmount(sessions);
+  const priceLabel = formatPriceWithFrequency(sessions);
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const { seasonBadge, dateRange } = sessionSeasonMeta(sessions);
 
@@ -194,6 +194,10 @@ export default function GroupedActivityCard({
               </span>
             </a>
           )}
+
+          <p className="relative z-[1] text-[13px] font-bold text-[#1D2B4B]">
+            {priceLabel}
+          </p>
 
           {/* Plain class-time schedule (non-interactive) */}
           {sessions.length > 0 && (
@@ -318,12 +322,10 @@ export default function GroupedActivityCard({
           )}
         </div>
 
-        {/* Footer: price | View class times */}
+        {/* Footer: price / frequency | View class times */}
         <div className="mt-auto flex items-center gap-3 border-t border-[#EEE9E1] pt-3">
           <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#1D2B4B]">
-            {fromPrice != null
-              ? `From $${fromPrice} / session`
-              : "Pricing varies"}
+            {priceLabel}
           </p>
           <span className="h-4 w-px flex-shrink-0 bg-[#E5E0D8]" aria-hidden />
           <button

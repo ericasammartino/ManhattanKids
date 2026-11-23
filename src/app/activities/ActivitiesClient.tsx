@@ -352,9 +352,15 @@ export default function ActivitiesClient({
       </div>
 
       {showCategoryPills && (
-        <div className="mb-6 flex flex-wrap justify-start gap-2.5">
+        <div
+          className="mb-6 flex flex-wrap justify-start gap-2.5"
+          role="group"
+          aria-label="Filter by category"
+        >
           <button
             type="button"
+            aria-pressed={categories.length === 0}
+            data-selected={categories.length === 0 ? "true" : "false"}
             onClick={() =>
               update({ category: "all", categories: [] })
             }
@@ -367,15 +373,17 @@ export default function ActivitiesClient({
             All
           </button>
           {RESULT_PILL_CATEGORIES.map((c) => {
-            const active =
-              categories.length === 1 && categories[0] === c;
+            const active = categories.includes(c);
             return (
               <button
                 key={c}
                 type="button"
+                aria-pressed={active}
+                data-selected={active ? "true" : "false"}
                 onClick={() =>
                   update({
                     category: active ? "all" : c,
+                    // Single-select pills: choosing one replaces any prior set.
                     categories: active ? [] : [c],
                   })
                 }

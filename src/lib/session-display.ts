@@ -85,6 +85,68 @@ export function minPriceAmount(sessions: Session[]): number | null {
   return Math.min(...amounts);
 }
 
+/** Normalize sheet Billing Cycle / Frequency for card display ("Semester" → "semester"). */
+export function formatFrequencyLabel(
+  raw: string | null | undefined
+): string | null {
+  if (!raw) return null;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return null;
+  if (/^free$/i.test(trimmed)) return "free";
+  if (/^bi[-\s]?monthly$/i.test(trimmed)) return "bi-monthly";
+  if (/^month(ly)?$/i.test(trimmed)) return "month";
+  if (/^year(ly)?$/i.test(trimmed)) return "year";
+  if (/^semester$/i.test(trimmed)) return "semester";
+  if (/^class$/i.test(trimmed)) return "class";
+  if (/^session$/i.test(trimmed)) return "session";
+  return trimmed.toLowerCase();
+}
+
+/** Frequency paired with the lowest priced session (fallback: first non-empty). */
+export function frequencyForMinPrice(
+  sessions: Session[]
+): string | null {
+  const priced = sessions
+    .filter(
+      (s) =>
+        typeof s["Price Amount"] === "number" &&
+        Number.isFinite(s["Price Amount"])
+    )
+    .sort(
+      (a, b) => (a["Price Amount"] as number) - (b["Price Amount"] as number)
+    );
+  for (const s of priced) {
+    const label = formatFrequencyLabel(s.Frequency);
+    if (label) return label;
+  }
+  for (const s of sessions) {
+    const label = formatFrequencyLabel(s.Frequency);
+    if (label) return label;
+  }
+  return null;
+}
+
+/** Card price line: "$925 / semester" (or "Free" / "Pricing varies"). */
+export function formatPriceWithFrequency(
+  sessions: Session[]
+): string {
+  const amount = minPriceAmount(sessions);
+  const frequency = frequencyForMinPrice(sessions);
+
+  if (frequency === "free" && (amount == null || amount === 0)) {
+    return "Free";
+  }
+  if (amount == null) {
+    if (frequency === "free") return "Free";
+    return "Pricing varies";
+  }
+
+  const pretty =
+    Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
+  const unit = frequency ?? "session";
+  return `$${pretty} / ${unit}`;
+}
+
 /** Prefer member / from-price wording when Cost Structure mentions members. */
 export function pricingFootnote(sessions: Session[]): string | null {
   const cost = sessions.map((s) => s["Cost Structure"] ?? "").join(" ");

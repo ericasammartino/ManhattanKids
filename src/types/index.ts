@@ -94,6 +94,8 @@ export interface Session {
   "Maximum Age Override": number | null;
   "Price Amount": number | null;
   "Cost Structure": string | null;
+  /** Billing cadence from sheet column M (Billing Cycle / Frequency). */
+  "Frequency": string | null;
   "Price Notes": string | null;
   "Availability": string | null;
   "Registration Opens": string | null;

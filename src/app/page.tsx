@@ -34,7 +34,9 @@ export default async function Home({ searchParams }: Props) {
               From sports and STEM to art, music, and everything in between.
             </p>
             <div className="mt-7">
-              <HeroSearch resultsPath="/" />
+              <Suspense fallback={null}>
+                <HeroSearch resultsPath="/" />
+              </Suspense>
             </div>
           </div>
 
