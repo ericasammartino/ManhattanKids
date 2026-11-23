@@ -25,7 +25,7 @@ import {
   sessionSeasonMeta,
   sortSessionsByDay,
 } from "@/lib/session-display";
-import ActivityImage from "@/components/ActivityImage";
+import OrgLogoMark from "@/components/OrgLogoMark";
 import {
   Calendar,
   Check,
@@ -104,7 +104,7 @@ export default function GroupedActivityCard({ activity }: Props) {
     "";
   const fromPrice = minPriceAmount(sessions);
   const priceNote = pricingFootnote(sessions);
-  const { src: imgSrc, isLogo } = resolveActivityImage(activity);
+  const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const { seasonBadge, dateRange } = sessionSeasonMeta(sessions);
   const maxSelect = maxSelectableClassTimes(sessions);
 
@@ -180,13 +180,16 @@ export default function GroupedActivityCard({ activity }: Props) {
           <div className="relative z-[1] flex gap-3 sm:gap-4">
             <div className="flex w-[88px] flex-shrink-0 flex-col items-center justify-center sm:w-[104px]">
               <div className="flex h-16 w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[72px]">
-                <ActivityImage
+                <OrgLogoMark
                   src={imgSrc}
                   alt={provider || activity["Activity Name"]}
+                  textFallback={textFallback}
+                  isLogo={isLogo}
                   className="max-h-full max-w-full object-contain"
+                  textClassName="text-[11px] sm:text-xs"
                 />
               </div>
-              {provider && (
+              {provider && !textFallback && (
                 <p className="mt-1.5 line-clamp-2 text-center text-[10px] font-semibold leading-tight text-[#1D2B4B]/80">
                   {provider}
                 </p>
@@ -380,14 +383,17 @@ export default function GroupedActivityCard({ activity }: Props) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex h-[132px] flex-shrink-0 items-center justify-center bg-[#EEF7FA] px-6 py-5 sm:h-[148px]">
-        <ActivityImage
+        <OrgLogoMark
           src={imgSrc}
           alt={provider || activity["Activity Name"]}
+          textFallback={textFallback}
+          isLogo={isLogo}
           className={
             isLogo
               ? "h-full w-full object-contain"
               : "h-full w-full rounded-lg object-cover"
           }
+          textClassName="text-base sm:text-lg px-3"
         />
       </div>
 

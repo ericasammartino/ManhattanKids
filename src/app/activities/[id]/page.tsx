@@ -11,7 +11,7 @@ import {
   resolveActivityImage,
 } from "@/lib/data";
 import { MapPin, Clock, Calendar, ExternalLink, ArrowLeft, Tag } from "lucide-react";
-import ActivityImage from "@/components/ActivityImage";
+import OrgLogoMark from "@/components/OrgLogoMark";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,7 +33,7 @@ export default async function ActivityDetailPage({ params }: Props) {
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
 
-  const { src: imgSrc, isLogo } = resolveActivityImage(activity);
+  const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -49,17 +49,23 @@ export default async function ActivityDetailPage({ params }: Props) {
       {/* Hero image */}
       <div
         className={`relative h-64 md:h-80 rounded-2xl overflow-hidden mb-6 ${
-          isLogo ? "bg-[#f3eee4]" : "bg-gray-100"
+          isLogo || textFallback ? "bg-[#f3eee4]" : "bg-gray-100"
         }`}
       >
-        <ActivityImage
+        <OrgLogoMark
           src={imgSrc}
-          alt={activity.organization?.["Organization Name"] ?? activity["Activity Name"]}
+          alt={
+            activity.organization?.["Organization Name"] ??
+            activity["Activity Name"]
+          }
+          textFallback={textFallback}
+          isLogo={isLogo}
           className={
             isLogo
               ? "w-full h-full object-contain p-10"
               : "w-full h-full object-cover"
           }
+          textClassName="text-2xl md:text-3xl px-8"
         />
         {category && (
           <span

@@ -229,24 +229,34 @@ export const PLACEHOLDER_IMAGES: Record<string, string> = {
     "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
 };
 
-/** Prefer activity photo, then org logo, then category placeholder. */
+/** Prefer activity photo, then org logo; otherwise org-name text (no invented logos). */
 export function resolveActivityImage(activity: EnrichedActivity): {
-  src: string;
+  src: string | null;
   isLogo: boolean;
+  /** When set, render this org name instead of an image. */
+  textFallback: string | null;
 } {
   const activityImg = nonempty(activity["Image URL"]);
-  if (activityImg) return { src: activityImg, isLogo: false };
+  if (activityImg) {
+    return { src: activityImg, isLogo: false, textFallback: null };
+  }
 
+  const orgName = nonempty(activity.organization?.["Organization Name"]);
   const logo =
     nonempty(activity.organization?.["Logo URL"]) ??
-    logoForOrganization(activity.organization?.["Organization Name"]);
-  if (logo) return { src: logo, isLogo: true };
+    logoForOrganization(orgName);
+  if (logo) return { src: logo, isLogo: true, textFallback: null };
+
+  if (orgName) {
+    return { src: null, isLogo: false, textFallback: orgName };
+  }
 
   const category =
     normalizePrimaryCategory(activity["Primary Category"]) ?? "default";
   return {
     src: PLACEHOLDER_IMAGES[category] ?? PLACEHOLDER_IMAGES.default,
     isLogo: false,
+    textFallback: null,
   };
 }
 
