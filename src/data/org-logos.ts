@@ -12,7 +12,7 @@ export const ORG_LOGOS: Record<string, string> = {
     "/logos/childrens-aid.png",
   "Goddard Riverside - Lincoln Center": "/logos/goddard-riverside.png",
   "Goddard Riverside - Beacon": "/logos/goddard-riverside.png",
-  "Supermud Pottery": "/logos/supermud.jpg",
+  "Supermud Pottery": "/logos/supermud.png",
   "Bloomingdale Library": "/logos/bloomingdale-library.png",
   "Riverside Library": "/logos/riverside-library.png",
   Robofun: "/logos/robofun.png",
@@ -56,6 +56,12 @@ export const ORG_LOGOS: Record<string, string> = {
   "Children's Art Classes – NYC": "/logos/childrens-art-classes.png",
   "Children’s Art Classes – NYC": "/logos/childrens-art-classes.png",
   "Arts in Action Visual Art Program": "/logos/arts-in-action.png",
+  "West Amadeus Music Studio": "/logos/west-amadeus.png",
+  "Bloomingdale School of Music": "/logos/bloomingdale-school-of-music.png",
+  "Silver Music": "/logos/silver-music.png",
+  "School of Rock — New York": "/logos/school-of-rock.png",
+  "School of Rock - New York": "/logos/school-of-rock.png",
+  "Anselmo Academy of Music and the Arts": "/logos/anselmo-academy.png",
 };
 
 function normalizeOrgName(name: string): string {
