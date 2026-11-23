@@ -46,10 +46,16 @@ export const ORG_LOGOS: Record<string, string> = {
   "Soccer Stars": "/logos/soccer-stars.png",
   "Super Soccer Stars": "/logos/soccer-stars.png",
   "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
-    "/logos/uws-brazilian-jiu-jitsu.jpg",
+    "/logos/uws-brazilian-jiu-jitsu.png",
   "Modern Martial Arts": "/logos/modern-martial-arts.png",
   "Steps on Broadway Academy": "/logos/steps-on-broadway.png",
   "Launch Math + Science Centers": "/logos/launch-math.png",
+  "Baker Piano Studio": "/logos/baker-piano.png",
+  "UWS Piano School": "/logos/uws-piano.png",
+  "The Art Studio NY": "/logos/art-studio-ny.png",
+  "Children's Art Classes – NYC": "/logos/childrens-art-classes.png",
+  "Children’s Art Classes – NYC": "/logos/childrens-art-classes.png",
+  "Arts in Action Visual Art Program": "/logos/arts-in-action.png",
 };
 
 function normalizeOrgName(name: string): string {
