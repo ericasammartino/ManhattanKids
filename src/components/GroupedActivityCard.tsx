@@ -381,48 +381,51 @@ export default function GroupedActivityCard({ activity }: Props) {
   }
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-      <div className="flex h-[132px] flex-shrink-0 items-center justify-center bg-[#EEF7FA] px-6 py-5 sm:h-[148px]">
-        <OrgLogoMark
-          src={imgSrc}
-          alt={provider || activity["Activity Name"]}
-          textFallback={textFallback}
-          isLogo={isLogo}
-          className={
-            isLogo
-              ? "h-full w-full object-contain"
-              : "h-full w-full rounded-lg object-cover"
-          }
-          textClassName="text-base sm:text-lg px-3"
-        />
-      </div>
+    <article className="flex h-full flex-col overflow-hidden rounded-[14px] border border-[#E8E4DC] bg-white shadow-[0_4px_16px_rgba(29,43,75,0.06)]">
+      <div className="flex flex-1 flex-col px-4 pb-3.5 pt-4 sm:px-5">
+        {/* Header: logo | title + org */}
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-14 sm:w-14">
+            <OrgLogoMark
+              src={imgSrc}
+              alt={provider || activity["Activity Name"]}
+              textFallback={textFallback}
+              isLogo={isLogo}
+              className={
+                isLogo
+                  ? "h-full w-full object-contain p-1.5"
+                  : "h-full w-full object-cover"
+              }
+              textClassName="text-[9px] sm:text-[10px] px-1"
+            />
+          </div>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-[#1D2B4B]">
+              <Link
+                href={`/activities/${activity["Activity ID"]}`}
+                className="hover:underline"
+              >
+                {activity["Activity Name"]}
+              </Link>
+            </h3>
+            {provider && (
+              <p className="mt-0.5 truncate text-[13px] text-[#8A8494]">
+                {provider}
+              </p>
+            )}
+          </div>
+        </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-        {taxonomyPill && (
-          <span className="inline-flex w-fit max-w-full truncate rounded-full bg-[#EDE4F5] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#5B4A6E]">
-            {taxonomyPill}
-          </span>
-        )}
-
-        <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-gray-900">
-          <Link
-            href={`/activities/${activity["Activity ID"]}`}
-            className="hover:underline"
-          >
-            {activity["Activity Name"]}
-          </Link>
-        </h3>
-
-        {provider && (
-          <p className="mt-1 truncate text-[13px] text-gray-500">{provider}</p>
-        )}
-
-        <div className="mt-3 space-y-2 text-[12px] text-gray-600">
+        {/* Meta: ages + days; location */}
+        <div className="mt-3.5 space-y-2 text-[12px] text-[#4B5563]">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {ageRange && (
               <p className="inline-flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" aria-hidden />
-                <span className="rounded-full bg-[#FBE8D8] px-2 py-0.5 text-[11px] font-medium text-[#8A5A3B]">
+                <Users
+                  className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]"
+                  aria-hidden
+                />
+                <span className="rounded-full bg-[#FFE8C2] px-2 py-0.5 text-[11px] font-medium text-[#8A5A3B]">
                   {ageRange}
                 </span>
               </p>
@@ -430,7 +433,7 @@ export default function GroupedActivityCard({ activity }: Props) {
             {daySummary && (
               <p className="inline-flex min-w-0 items-center gap-1.5">
                 <Calendar
-                  className="h-3.5 w-3.5 flex-shrink-0 text-gray-500"
+                  className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]"
                   aria-hidden
                 />
                 <span className="truncate">{daySummary}</span>
@@ -440,7 +443,7 @@ export default function GroupedActivityCard({ activity }: Props) {
           {locationLabel && (
             <p className="inline-flex min-w-0 items-center gap-1.5">
               <MapPin
-                className="h-3.5 w-3.5 flex-shrink-0 text-gray-500"
+                className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]"
                 aria-hidden
               />
               <span className="truncate">{locationLabel}</span>
@@ -448,24 +451,21 @@ export default function GroupedActivityCard({ activity }: Props) {
           )}
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-bold text-gray-900">
-              {fromPrice != null
-                ? `From $${fromPrice} / session`
-                : "Pricing varies"}
-            </p>
-            {priceNote && (
-              <p className="truncate text-[10px] text-gray-400">{priceNote}</p>
-            )}
-          </div>
+        {/* Footer: price | View class times */}
+        <div className="mt-auto flex items-center gap-3 border-t border-[#EEE9E1] pt-3">
+          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#1D2B4B]">
+            {fromPrice != null
+              ? `From $${fromPrice} / session`
+              : "Pricing varies"}
+          </p>
+          <span className="h-4 w-px flex-shrink-0 bg-[#E5E0D8]" aria-hidden />
           <button
             type="button"
             onClick={toggleExpanded}
-            className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-[#1D2B4B] px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
+            className="inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-[#3B6EA5] transition-colors hover:text-[#1D2B4B]"
           >
             View class times
-            <span aria-hidden>→</span>
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
           </button>
         </div>
       </div>
