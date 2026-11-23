@@ -16,7 +16,7 @@ export const ORG_LOGOS: Record<string, string> = {
   "Bloomingdale Library": "/logos/bloomingdale-library.png",
   "Riverside Library": "/logos/riverside-library.png",
   Robofun: "/logos/robofun.png",
-  ZPlaySchool: "/logos/z-play.jpg",
+  ZPlaySchool: "/logos/z-play.png",
   "Writopia Lab Upper West Side": "/logos/writopia-lab.png",
   "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.png",
   "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.png",
@@ -44,9 +44,12 @@ export const ORG_LOGOS: Record<string, string> = {
   "Mo’ Motion": "/logos/mo-motion.png",
   "Mo' Motion": "/logos/mo-motion.png",
   "Soccer Stars": "/logos/soccer-stars.png",
+  "Super Soccer Stars": "/logos/soccer-stars.png",
   "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
     "/logos/uws-brazilian-jiu-jitsu.jpg",
   "Modern Martial Arts": "/logos/modern-martial-arts.png",
+  "Steps on Broadway Academy": "/logos/steps-on-broadway.png",
+  "Launch Math + Science Centers": "/logos/launch-math.png",
 };
 
 function normalizeOrgName(name: string): string {
