@@ -365,6 +365,11 @@ async function main() {
     const sessionDates = text(row["Session Dates (as shown)"]);
     const cost = text(row.Cost);
     const price = parseCost(row.Cost);
+    // Column M: Erica labels cost with cadence ("Billing Cycle" / "Frequency").
+    const frequency =
+      text(row["Billing Cycle"]) ??
+      text(row.Frequency) ??
+      text(row["Price Frequency"]);
     const address = text(row.Address);
     const crossStreets = text(row["Cross Streets"]);
     const notes = text(row.Notes);
@@ -510,6 +515,7 @@ async function main() {
       "Maximum Age Override": ageMax,
       "Price Amount": price,
       "Cost Structure": cost,
+      Frequency: frequency,
       "Price Notes": sessionDates,
       Availability: "Available",
       "Registration Opens": null,

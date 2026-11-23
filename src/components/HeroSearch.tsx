@@ -1,7 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Search, X } from "lucide-react";
 
 const ARROW_FILL = "#F6B346";
@@ -11,34 +18,71 @@ type Props = {
 };
 
 export default function HeroSearch({ resultsPath = "/" }: Props) {
-  const [query, setQuery] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const urlSearch = searchParams.get("search") ?? "";
+  const [query, setQuery] = useState(urlSearch);
 
-  const go = (nextQuery = query) => {
-    const params = new URLSearchParams();
-    const trimmed = nextQuery.trim();
-    if (trimmed) params.set("search", trimmed);
-    params.set("neighborhood", "all");
-    const qs = params.toString();
-    const href = qs ? `${resultsPath}?${qs}#programs` : `${resultsPath}#programs`;
-    router.push(href);
-    // Ensure scroll even when already on the same path.
-    requestAnimationFrame(() => {
-      document.getElementById("programs")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+  // Keep the hero input aligned with URL-driven search (pills / back / clear).
+  useEffect(() => {
+    setQuery(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
+
+  const navigate = useCallback(
+    (nextQuery: string, options?: { replace?: boolean }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = nextQuery.trim();
+      if (trimmed) params.set("search", trimmed);
+      else params.delete("search");
+      params.set("neighborhood", "all");
+      const qs = params.toString();
+      const href = qs
+        ? `${resultsPath}?${qs}#programs`
+        : `${resultsPath}#programs`;
+      startTransition(() => {
+        if (options?.replace) {
+          router.replace(href, { scroll: false });
+        } else {
+          router.push(href, { scroll: false });
+        }
       });
-    });
-  };
+      requestAnimationFrame(() => {
+        document.getElementById("programs")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+    [resultsPath, router, searchParams]
+  );
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    go();
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    navigate(query);
+  };
+
+  const onChange = (value: string) => {
+    setQuery(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    // Live filter while typing so org/title search feels immediate on homepage.
+    searchTimer.current = setTimeout(() => {
+      navigate(value, { replace: true });
+    }, 250);
   };
 
   const clearQuery = () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
     setQuery("");
-    go("");
+    navigate("");
   };
 
   const hasQuery = query.trim().length > 0;
@@ -50,11 +94,11 @@ export default function HeroSearch({ resultsPath = "/" }: Props) {
         type="text"
         name="search"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search afterschool activities"
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search by class or organization"
         className="hero-search w-full rounded-full py-3.5 pl-11 pr-14 text-[15px] placeholder:text-foreground/45 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         autoComplete="off"
-        aria-label="Search activities"
+        aria-label="Search activities by class or organization"
       />
       {hasQuery ? (
         <button
