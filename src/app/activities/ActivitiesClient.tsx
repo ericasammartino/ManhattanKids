@@ -145,6 +145,10 @@ export default function ActivitiesClient({
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
+  /** Accordion: only one grouped activity card expanded at a time. */
+  const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
+    null
+  );
   const [showFilters, setShowFilters] = useState(
     initialFilters.schedulePatterns.length > 0 ||
       initialFilters.subcategories.length > 0 ||
@@ -636,19 +640,23 @@ export default function ActivitiesClient({
               : "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
           }
         >
-          {filtered.map((activity) =>
-            groupedCards ? (
+          {filtered.map((activity) => {
+            const activityId = activity["Activity ID"];
+            return groupedCards ? (
               <GroupedActivityCard
-                key={activity["Activity ID"]}
+                key={activityId}
                 activity={activity}
+                expanded={expandedActivityId === activityId}
+                onToggle={() =>
+                  setExpandedActivityId((current) =>
+                    current === activityId ? null : activityId
+                  )
+                }
               />
             ) : (
-              <ActivityCard
-                key={activity["Activity ID"]}
-                activity={activity}
-              />
-            )
-          )}
+              <ActivityCard key={activityId} activity={activity} />
+            );
+          })}
         </div>
       )}
     </div>

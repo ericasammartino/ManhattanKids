@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useMemo } from "react";
 import type { EnrichedActivity } from "@/types";
 import {
   formatAgeRange,
@@ -33,6 +32,9 @@ import {
 
 interface Props {
   activity: EnrichedActivity;
+  /** Controlled expand state for accordion (one open at a time). */
+  expanded?: boolean;
+  onToggle?: () => void;
 }
 
 const DAY_SHORT: Record<string, string> = {
@@ -62,12 +64,16 @@ function displayPrimaryCategory(raw: string | null | undefined): string | null {
   return normalizePrimaryCategory(raw);
 }
 
-export default function GroupedActivityCard({ activity }: Props) {
+export default function GroupedActivityCard({
+  activity,
+  expanded: expandedProp,
+  onToggle,
+}: Props) {
   const sessions = useMemo(
     () => sortSessionsByDay(activity.sessions ?? []),
     [activity.sessions]
   );
-  const [expanded, setExpanded] = useState(false);
+  const expanded = Boolean(expandedProp);
 
   const category = displayPrimaryCategory(activity["Primary Category"]);
   const subcategory = displaySubcategory(activity.Subcategory);
@@ -100,7 +106,7 @@ export default function GroupedActivityCard({ activity }: Props) {
   const { seasonBadge, dateRange } = sessionSeasonMeta(sessions);
 
   function toggleExpanded() {
-    setExpanded((prev) => !prev);
+    onToggle?.();
   }
 
   if (expanded) {
@@ -110,8 +116,8 @@ export default function GroupedActivityCard({ activity }: Props) {
         <div className="open-class-card__header relative flex flex-1 flex-col gap-4 p-4 sm:p-5">
           {/* Header: logo | divider | taxonomy + title */}
           <div className="relative z-[1] flex gap-3 sm:gap-4">
-            <div className="flex w-[88px] flex-shrink-0 flex-col items-center justify-center sm:w-[104px]">
-              <div className="flex h-16 w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[72px]">
+            <div className="flex w-[100px] flex-shrink-0 flex-col items-center justify-center sm:w-[120px]">
+              <div className="flex h-[74px] w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[84px]">
                 <OrgLogoMark
                   src={imgSrc}
                   alt={provider || activity["Activity Name"]}
@@ -140,12 +146,7 @@ export default function GroupedActivityCard({ activity }: Props) {
                 </span>
               )}
               <h3 className="mt-2 text-[1.05rem] font-extrabold leading-snug tracking-tight text-[#1D2B4B] sm:text-[1.15rem]">
-                <Link
-                  href={`/activities/${activity["Activity ID"]}`}
-                  className="hover:underline"
-                >
-                  {activity["Activity Name"]}
-                </Link>
+                {activity["Activity Name"]}
               </h3>
             </div>
           </div>
@@ -256,7 +257,7 @@ export default function GroupedActivityCard({ activity }: Props) {
       <div className="flex flex-1 flex-col px-4 pb-3.5 pt-4 sm:px-5">
         {/* Header: logo | title + org */}
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-14 sm:w-14">
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-16 sm:w-16">
             <OrgLogoMark
               src={imgSrc}
               alt={provider || activity["Activity Name"]}
@@ -272,12 +273,7 @@ export default function GroupedActivityCard({ activity }: Props) {
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h3 className="line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-[#1D2B4B]">
-              <Link
-                href={`/activities/${activity["Activity ID"]}`}
-                className="hover:underline"
-              >
-                {activity["Activity Name"]}
-              </Link>
+              {activity["Activity Name"]}
             </h3>
             {provider && (
               <p className="mt-0.5 truncate text-[13px] text-[#8A8494]">
