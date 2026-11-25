@@ -276,6 +276,11 @@ export default function GroupedActivityCard({
             />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
+            {category && (
+              <span className="mb-1 inline-flex max-w-full truncate rounded-full bg-[#EDE4F5] px-2 py-0.5 text-[9px] font-semibold tracking-wide text-[#6B4C8A]">
+                {category}
+              </span>
+            )}
             <h3 className="line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-[#1D2B4B]">
               {activity["Activity Name"]}
             </h3>
@@ -296,9 +301,7 @@ export default function GroupedActivityCard({
                   className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]"
                   aria-hidden
                 />
-                <span className="rounded-full bg-[#FFE8C2] px-2 py-0.5 text-[11px] font-medium text-[#8A5A3B]">
-                  {ageRange}
-                </span>
+                <span>{ageRange}</span>
               </p>
             )}
             {daySummary && (
@@ -323,11 +326,10 @@ export default function GroupedActivityCard({
         </div>
 
         {/* Footer: price / frequency | View class times */}
-        <div className="mt-auto flex items-center gap-3 border-t border-[#EEE9E1] pt-3">
-          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#1D2B4B]">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-[#EEE9E1] pt-3">
+          <p className="min-w-0 text-[12px] font-bold leading-snug text-[#1D2B4B] sm:text-[13px]">
             {priceLabel}
           </p>
-          <span className="h-4 w-px flex-shrink-0 bg-[#E5E0D8]" aria-hidden />
           <button
             type="button"
             onClick={toggleExpanded}

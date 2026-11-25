@@ -126,7 +126,7 @@ export function frequencyForMinPrice(
   return null;
 }
 
-/** Card price line: "$925 / semester" (or "Free" / "Pricing varies"). */
+/** Card price line: "from $925 / semester" (or "Free" / "Pricing varies"). */
 export function formatPriceWithFrequency(
   sessions: Session[]
 ): string {
@@ -144,7 +144,7 @@ export function formatPriceWithFrequency(
   const pretty =
     Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
   const unit = frequency ?? "session";
-  return `$${pretty} / ${unit}`;
+  return `from $${pretty} / ${unit}`;
 }
 
 /** Prefer member / from-price wording when Cost Structure mentions members. */
