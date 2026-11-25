@@ -6,10 +6,13 @@ import {
   formatAgeRange,
   formatDate,
   formatTime,
-  CATEGORY_COLORS,
   CATEGORY_ICONS,
   resolveActivityImage,
 } from "@/lib/data";
+import {
+  getCategoryPillStyle,
+  normalizePrimaryCategory,
+} from "@/lib/taxonomy";
 import { MapPin, Clock, Calendar, ExternalLink, ArrowLeft, Tag } from "lucide-react";
 import OrgLogoMark from "@/components/OrgLogoMark";
 
@@ -28,8 +31,11 @@ export default async function ActivityDetailPage({ params }: Props) {
 
   if (!activity) notFound();
 
-  const category = activity["Primary Category"] ?? "";
-  const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
+  const category =
+    normalizePrimaryCategory(activity["Primary Category"]) ??
+    activity["Primary Category"] ??
+    "";
+  const pillStyle = getCategoryPillStyle(category);
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
 
@@ -69,7 +75,11 @@ export default async function ActivityDetailPage({ params }: Props) {
         />
         {category && (
           <span
-            className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-sm font-semibold ${colorClass}`}
+            className="absolute top-4 left-4 px-3 py-1.5 rounded-full text-sm font-semibold"
+            style={{
+              backgroundColor: pillStyle.background,
+              color: pillStyle.color,
+            }}
           >
             {icon} {category}
           </span>

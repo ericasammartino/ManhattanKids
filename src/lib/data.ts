@@ -20,6 +20,8 @@ import {
   activityMatchesSubcategory,
   sessionRunsOnDay,
   splitSubcategories,
+  CATEGORY_PILL_FALLBACK,
+  getCategoryPillStyle,
 } from "@/lib/taxonomy";
 import { locationBandIdFromCrossStreets } from "@/lib/location-bands";
 
@@ -455,16 +457,22 @@ export const CATEGORIES = [...PRIMARY_CATEGORIES];
 export const SUBCATEGORY_OPTIONS = [...SUBCATEGORIES];
 export const DAY_OPTIONS = [...DAYS_OF_WEEK];
 
+/**
+ * Tailwind class pairs for legacy call sites. Prefer getCategoryPillStyle()
+ * (inline styles) so arbitrary hex washes are never purged by Tailwind JIT.
+ */
 export const CATEGORY_COLORS: Record<string, string> = {
-  "Afterschool Care": "bg-sky-200 text-sky-800",
-  "Arts & Creativity": "bg-rose-200 text-rose-800",
-  Entertainment: "bg-purple-200 text-purple-800",
-  "Learning & Enrichment": "bg-blue-200 text-blue-800",
-  "Museums & Culture": "bg-teal-200 text-teal-800",
-  "Play & Exploration": "bg-lime-200 text-lime-800",
-  "Sports & Movement": "bg-yellow-200 text-yellow-800",
-  STEM: "bg-violet-200 text-violet-800",
+  "Arts & Creativity": "bg-[#FED8E4] text-[#9B3D5A]",
+  "Sports & Movement": "bg-[#FFF4C2] text-[#7A5C10]",
+  STEM: "bg-[#F0DFF1] text-[#6B3D7A]",
+  "Play & Exploration": "bg-[#DAEAAE] text-[#3F5A1F]",
+  "Learning & Enrichment": "bg-[#FDD9B5] text-[#8B4A28]",
+  "Afterschool Care": "bg-[#CDEAE7] text-[#2F6B66]",
+  Entertainment: "bg-[#EDE4F5] text-[#6B4C8A]",
+  "Museums & Culture": "bg-[#EDE4F5] text-[#6B4C8A]",
 };
+
+export { getCategoryPillStyle, CATEGORY_PILL_FALLBACK };
 
 export const CATEGORY_ICONS: Record<string, string> = {
   "Afterschool Care": "🏫",

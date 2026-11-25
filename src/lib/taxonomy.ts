@@ -199,13 +199,37 @@ export const DAYS_OF_WEEK = [
 
 export type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
 
-/** Map historical / alternate primary-category labels onto the taxonomy. */
+/**
+ * Map historical / alternate primary-category labels onto the taxonomy.
+ * Keys are lowercase; lookup is case-insensitive via normalizePrimaryCategory.
+ */
 const CATEGORY_ALIASES: Record<string, string> = {
-  "STEM & Discovery": "STEM",
-  "Nature & Outdoors": "Play & Exploration",
-  "Events & Experiences": "Entertainment",
-  "Food & Cooking": "Arts & Creativity",
-  Seasonal: "Entertainment",
+  "stem & discovery": "STEM",
+  "nature & outdoors": "Play & Exploration",
+  "events & experiences": "Entertainment",
+  "food & cooking": "Arts & Creativity",
+  seasonal: "Entertainment",
+  // Short / common aliases
+  arts: "Arts & Creativity",
+  creativity: "Arts & Creativity",
+  "arts and creativity": "Arts & Creativity",
+  sports: "Sports & Movement",
+  movement: "Sports & Movement",
+  "sports and movement": "Sports & Movement",
+  play: "Play & Exploration",
+  exploration: "Play & Exploration",
+  "play and exploration": "Play & Exploration",
+  learning: "Learning & Enrichment",
+  enrichment: "Learning & Enrichment",
+  "learning and enrichment": "Learning & Enrichment",
+  afterschool: "Afterschool Care",
+  "after school": "Afterschool Care",
+  "afterschool care": "Afterschool Care",
+  "after school care": "Afterschool Care",
+  museums: "Museums & Culture",
+  culture: "Museums & Culture",
+  "museums and culture": "Museums & Culture",
+  entertainment: "Entertainment",
 };
 
 /** Extra tokens in Session Subcategory that should match a taxonomy value. */
@@ -237,7 +261,43 @@ export function normalizePrimaryCategory(
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  return CATEGORY_ALIASES[trimmed] ?? trimmed;
+  const lower = trimmed.toLowerCase();
+  const canonical = PRIMARY_CATEGORIES.find((c) => c.toLowerCase() === lower);
+  if (canonical) return canonical;
+  return CATEGORY_ALIASES[lower] ?? trimmed;
+}
+
+/** Soft lavender fallback used on closed/open cards before the color map. */
+export const CATEGORY_PILL_FALLBACK = {
+  background: "#EDE4F5",
+  color: "#6B4C8A",
+} as const;
+
+/**
+ * Primary-category wash + readable text (darker same-hue / near-navy).
+ * Backgrounds locked to the brand palette; text chosen for contrast.
+ */
+export const CATEGORY_PILL_COLORS: Record<
+  string,
+  { background: string; color: string }
+> = {
+  "Arts & Creativity": { background: "#FED8E4", color: "#9B3D5A" },
+  "Sports & Movement": { background: "#FFF4C2", color: "#7A5C10" },
+  STEM: { background: "#F0DFF1", color: "#6B3D7A" },
+  "Play & Exploration": { background: "#DAEAAE", color: "#3F5A1F" },
+  "Learning & Enrichment": { background: "#FDD9B5", color: "#8B4A28" },
+  "Afterschool Care": { background: "#CDEAE7", color: "#2F6B66" },
+};
+
+/** Resolve pill wash/text for any raw Primary Category label (aliases OK). */
+export function getCategoryPillStyle(
+  value: string | null | undefined
+): { background: string; color: string } {
+  const canonical = normalizePrimaryCategory(value);
+  if (canonical && CATEGORY_PILL_COLORS[canonical]) {
+    return CATEGORY_PILL_COLORS[canonical];
+  }
+  return CATEGORY_PILL_FALLBACK;
 }
 
 /** Prefer a specific subcategory over a broad companion tag like "Sports". */
