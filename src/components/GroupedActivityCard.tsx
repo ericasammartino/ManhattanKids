@@ -9,6 +9,7 @@ import {
 import {
   displaySubcategory,
   formatDayRange,
+  getCategoryPillStyle,
   normalizePrimaryCategory,
   parseDaysOfWeek,
   splitSubcategories,
@@ -78,6 +79,7 @@ export default function GroupedActivityCard({
   const category = displayPrimaryCategory(activity["Primary Category"]);
   const subcategory = displaySubcategory(activity.Subcategory);
   const taxonomyPill = [category, subcategory].filter(Boolean).join(" • ");
+  const categoryPillStyle = getCategoryPillStyle(category);
 
   const provider =
     activity.organization?.["Organization Name"] ??
@@ -141,7 +143,13 @@ export default function GroupedActivityCard({
 
             <div className="min-w-0 flex-1 pt-0.5">
               {taxonomyPill && (
-                <span className="inline-flex max-w-full truncate rounded-full bg-[#EDE4F5] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#6B4C8A]">
+                <span
+                  className="inline-flex max-w-full truncate rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide"
+                  style={{
+                    backgroundColor: categoryPillStyle.background,
+                    color: categoryPillStyle.color,
+                  }}
+                >
                   {taxonomyPill}
                 </span>
               )}
@@ -277,7 +285,13 @@ export default function GroupedActivityCard({
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             {category && (
-              <span className="mb-1 inline-flex max-w-full truncate rounded-full bg-[#EDE4F5] px-2 py-0.5 text-[9px] font-semibold tracking-wide text-[#6B4C8A]">
+              <span
+                className="mb-1 inline-flex max-w-full truncate rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-wide"
+                style={{
+                  backgroundColor: categoryPillStyle.background,
+                  color: categoryPillStyle.color,
+                }}
+              >
                 {category}
               </span>
             )}

@@ -1,13 +1,15 @@
 import Link from "next/link";
 import type { EnrichedActivity } from "@/types";
 import {
-  CATEGORY_COLORS,
   CATEGORY_ICONS,
   formatAgeRange,
   PLACEHOLDER_IMAGES,
   resolveActivityImage,
 } from "@/lib/data";
-import { normalizePrimaryCategory } from "@/lib/taxonomy";
+import {
+  getCategoryPillStyle,
+  normalizePrimaryCategory,
+} from "@/lib/taxonomy";
 import { MapPin, Clock, Calendar } from "lucide-react";
 import OrgLogoMark from "@/components/OrgLogoMark";
 
@@ -21,7 +23,9 @@ export { PLACEHOLDER_IMAGES };
 export default function ActivityCard({ activity, variant = "default" }: Props) {
   const category =
     normalizePrimaryCategory(activity["Primary Category"]) ?? "default";
-  const colorClass = CATEGORY_COLORS[category] ?? "bg-gray-100 text-gray-700";
+  const pillStyle = getCategoryPillStyle(
+    category === "default" ? null : category
+  );
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const imgClass = isLogo
@@ -109,7 +113,13 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
         <div className={`${imgWrapClass} h-48`}>
           {logoMark}
           {category && category !== "default" && (
-            <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
+            <span
+              className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold"
+              style={{
+                backgroundColor: pillStyle.background,
+                color: pillStyle.color,
+              }}
+            >
               {icon} {category}
             </span>
           )}

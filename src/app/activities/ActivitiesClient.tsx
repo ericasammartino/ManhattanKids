@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useTransition,
+  type CSSProperties,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { EnrichedActivity } from "@/types";
@@ -21,7 +22,10 @@ import {
   type ActivityFilters,
 } from "@/lib/activity-filters";
 import { LOCATION_BANDS } from "@/lib/location-bands";
-import { RESULT_PILL_CATEGORIES } from "@/lib/taxonomy";
+import {
+  getCategoryPillStyle,
+  RESULT_PILL_CATEGORIES,
+} from "@/lib/taxonomy";
 import { calendarDayKey, shuffleForDay } from "@/lib/daily-shuffle";
 import ActivityCard from "@/components/ActivityCard";
 import GroupedActivityCard from "@/components/GroupedActivityCard";
@@ -374,6 +378,7 @@ export default function ActivitiesClient({
           </button>
           {RESULT_PILL_CATEGORIES.map((c) => {
             const active = categories.includes(c);
+            const pillStyle = getCategoryPillStyle(c);
             return (
               <button
                 key={c}
@@ -387,9 +392,15 @@ export default function ActivitiesClient({
                     categories: active ? [] : [c],
                   })
                 }
-                className={`category-pill ${
+                className={`category-pill category-pill--colored ${
                   active ? "category-pill--active" : "category-pill--idle"
                 }`}
+                style={
+                  {
+                    ["--pill-bg"]: pillStyle.background,
+                    ["--pill-fg"]: pillStyle.color,
+                  } as CSSProperties
+                }
               >
                 {c}
               </button>

@@ -205,6 +205,40 @@ h6 {
     inset 0 -1px 0 rgba(255, 255, 255, 0.6);
 }
 
+/*
+ * Per-category wash pills (homepage filters). Background/color come from
+ * --pill-bg / --pill-fg so the cream active gradient never overrides them.
+ */
+.category-pill--colored {
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  border-color: color-mix(in srgb, var(--pill-fg) 18%, transparent);
+}
+
+.category-pill--colored.category-pill--idle {
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  border-top-color: color-mix(in srgb, #ffffff 70%, var(--pill-bg));
+  border-bottom-color: color-mix(in srgb, var(--pill-fg) 22%, transparent);
+}
+
+.category-pill--colored.category-pill--idle:hover {
+  background: color-mix(in srgb, var(--pill-bg) 88%, #ffffff);
+  filter: none;
+}
+
+.category-pill--colored.category-pill--idle:active {
+  background: color-mix(in srgb, var(--pill-bg) 92%, var(--pill-fg));
+}
+
+.category-pill--colored.category-pill--active {
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  border-color: color-mix(in srgb, var(--pill-fg) 28%, transparent);
+  border-top-color: color-mix(in srgb, var(--pill-fg) 35%, transparent);
+  border-bottom-color: color-mix(in srgb, #ffffff 80%, var(--pill-bg));
+}
+
 .filter-chip {
   border: 1px solid #cfc9c0;
   background: transparent;
