@@ -156,6 +156,11 @@ export default function GroupedActivityCard({
               <h3 className="mt-2 text-[1.05rem] font-extrabold leading-snug tracking-tight text-[#1D2B4B] sm:text-[1.15rem]">
                 {activity["Activity Name"]}
               </h3>
+              {activity["Description"]?.trim() && (
+                <p className="mt-1.5 text-[13px] leading-relaxed text-[#6B6578] sm:text-[14px]">
+                  {activity["Description"].trim()}
+                </p>
+              )}
             </div>
           </div>
 

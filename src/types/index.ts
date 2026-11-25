@@ -104,6 +104,8 @@ export interface Session {
   "Status": string | null;
   "Source URL": string | null;
   "Last Verified": string | null;
+  /** Class blurb from Manual Entry "Class Description" column. */
+  "Description": string | null;
   "Notes": string | null;
 }
 

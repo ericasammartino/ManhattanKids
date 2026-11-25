@@ -372,6 +372,9 @@ async function main() {
       text(row["Price Frequency"]);
     const address = text(row.Address);
     const crossStreets = text(row["Cross Streets"]);
+    // DB25+: dedicated class blurb (distinct from freeform Notes).
+    const classDescription =
+      text(row["Class Description"]) ?? text(row["Class description"]);
     const notes = text(row.Notes);
     const sourceUrl =
       text(row["Source URL"]) ??
@@ -471,7 +474,7 @@ async function main() {
         "Organization ID": orgId,
         "Default Location ID": locId,
         "Default Location Name": orgName,
-        Description: notes,
+        Description: classDescription,
         "Primary Category": category,
         Subcategory: subcategory,
         "Secondary Categories": null,
@@ -493,8 +496,16 @@ async function main() {
         "Source URL": sourceUrl,
         Status: "Active",
         "Last Verified": null,
-        Notes: [sessionDates, sourceType].filter(Boolean).join(" · ") || null,
+        Notes: [sessionDates, sourceType, notes].filter(Boolean).join(" · ") || null,
       });
+    } else if (classDescription) {
+      // Later rows may carry the blurb when the first grouping row was empty.
+      const existing = activities.find(
+        (a) => a["Activity ID"] === activityIds.get(actKey)
+      );
+      if (existing && !text(existing.Description)) {
+        existing.Description = classDescription;
+      }
     }
     const actId = activityIds.get(actKey)!;
 
@@ -524,6 +535,7 @@ async function main() {
       Status: "Active",
       "Source URL": sourceUrl,
       "Last Verified": null,
+      Description: classDescription,
       Notes: notes,
     });
   }
