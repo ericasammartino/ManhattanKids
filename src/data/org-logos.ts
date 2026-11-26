@@ -62,6 +62,11 @@ export const ORG_LOGOS: Record<string, string> = {
   "School of Rock — New York": "/logos/school-of-rock.png",
   "School of Rock - New York": "/logos/school-of-rock.png",
   "Anselmo Academy of Music and the Arts": "/logos/anselmo-academy.png",
+  "For Art's Sake": "/logos/for-arts-sake.png",
+  "Russian Children Studio": "/logos/russian-children-studio.png",
+  SayNinja: "/logos/say-ninja.png",
+  "Say Ninja": "/logos/say-ninja.png",
+  "Imagine Skateboarding": "/logos/imagine-skateboarding.png",
 };
 
 function normalizeOrgName(name: string): string {
