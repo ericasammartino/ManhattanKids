@@ -251,6 +251,93 @@ function pad(n: number, width = 4): string {
   return String(n).padStart(width, "0");
 }
 
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
+const DAY_ALIASES: Record<string, string> = {
+  monday: "Monday",
+  mon: "Monday",
+  tuesday: "Tuesday",
+  tue: "Tuesday",
+  tues: "Tuesday",
+  wednesday: "Wednesday",
+  wed: "Wednesday",
+  thursday: "Thursday",
+  thu: "Thursday",
+  thur: "Thursday",
+  thurs: "Thursday",
+  friday: "Friday",
+  fri: "Friday",
+  saturday: "Saturday",
+  sat: "Saturday",
+  sunday: "Sunday",
+  sun: "Sunday",
+};
+
+const DAY_TOKEN_PATTERN =
+  "monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tues|tue|wed|thurs|thur|thu|fri|sat|sun";
+
+/**
+ * Expand a Day(s) cell ("Monday, Tuesday, Wednesday, Thursday, Friday",
+ * "Mon–Fri", "Every day", "Daily", "Weekdays", "Monday, Wednesday") into
+ * canonical single-day names in Monday–Sunday order so each day gets its own
+ * session row in the expanded card schedule.
+ */
+function expandDaysOfWeek(raw: string | null): (string | null)[] {
+  if (!raw) return [null];
+  const cleaned = raw.trim();
+  if (!cleaned || /^none$/i.test(cleaned)) return [null];
+
+  const lower = cleaned.toLowerCase();
+  if (/\b(every\s*day|daily|all\s*week|7\s*days?)\b/.test(lower)) {
+    return [...DAYS_OF_WEEK];
+  }
+  if (/\bweekdays?\b/.test(lower)) {
+    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  }
+  if (/\bweekends?\b/.test(lower)) {
+    return ["Saturday", "Sunday"];
+  }
+
+  const found = new Set<string>();
+
+  const rangeRe = new RegExp(
+    `\\b(${DAY_TOKEN_PATTERN})\\.?\\s*(?:[–—-]|to|thru|through)\\s*(${DAY_TOKEN_PATTERN})\\.?\\b`,
+    "gi"
+  );
+  for (const match of lower.matchAll(rangeRe)) {
+    const start = DAY_ALIASES[match[1].toLowerCase()];
+    const end = DAY_ALIASES[match[2].toLowerCase()];
+    if (!start || !end) continue;
+    const si = DAYS_OF_WEEK.indexOf(start as (typeof DAYS_OF_WEEK)[number]);
+    const ei = DAYS_OF_WEEK.indexOf(end as (typeof DAYS_OF_WEEK)[number]);
+    if (si >= 0 && ei >= 0) {
+      if (si <= ei) {
+        for (let i = si; i <= ei; i++) found.add(DAYS_OF_WEEK[i]);
+      } else {
+        for (let i = si; i < DAYS_OF_WEEK.length; i++) found.add(DAYS_OF_WEEK[i]);
+        for (let i = 0; i <= ei; i++) found.add(DAYS_OF_WEEK[i]);
+      }
+    }
+  }
+
+  const tokenRe = new RegExp(`\\b(${DAY_TOKEN_PATTERN})\\.?\\b`, "gi");
+  for (const match of lower.matchAll(tokenRe)) {
+    const canonical = DAY_ALIASES[match[1].toLowerCase()];
+    if (canonical) found.add(canonical);
+  }
+
+  if (found.size === 0) return [cleaned];
+  return DAYS_OF_WEEK.filter((d) => found.has(d));
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const inputIdx = args.indexOf("--input");
@@ -339,6 +426,8 @@ async function main() {
   const locIds = new Map<string, string>(); // key: orgId|address
   const locById = new Map<string, Row>();
   const activityIds = new Map<string, string>(); // key: orgId|name|category|ageMin|ageMax
+  // Deduplicates overlapping day slots created when expanding multi-day rows.
+  const sessionBySlot = new Map<string, { session: Row; fromMultiDay: boolean }>();
 
   const organizations: Row[] = [];
   const locations: Row[] = [];
@@ -511,35 +600,98 @@ async function main() {
     }
     const actId = activityIds.get(actKey)!;
 
-    sessions.push({
-      "Session ID": `SES-${pad(sessSeq++)}`,
-      "Activity ID": actId,
-      "Location ID": locId,
-      "Session Name": [days, startTime && endTime ? `${startTime}–${endTime}` : null]
-        .filter(Boolean)
-        .join(" · ") || className,
-      "Start Date": null,
-      "End Date": null,
-      "Start Time": startTime,
-      "End Time": endTime,
-      "Days of the Week": days,
-      "Schedule Pattern": "Recurring Weekly",
-      "Minimum Age Override": ageMin,
-      "Maximum Age Override": ageMax,
-      "Price Amount": price,
-      "Cost Structure": cost,
-      Frequency: frequency,
-      "Price Notes": sessionDates,
-      Availability: "Available",
-      "Registration Opens": null,
-      "Registration Closes": null,
-      "Registration URL": sourceUrl,
-      Status: "Active",
-      "Source URL": sourceUrl,
-      "Last Verified": null,
-      Description: classDescription,
-      Notes: notes,
-    });
+    const expandedDays = expandDaysOfWeek(days);
+    const isMultiDay = expandedDays.length > 1;
+
+    for (const day of expandedDays) {
+      const slotKey = [
+        actId,
+        day ?? "",
+        startTime ?? "",
+        endTime ?? "",
+      ].join("|");
+      const existingSlot = sessionBySlot.get(slotKey);
+
+      if (isMultiDay && existingSlot) {
+        const existingPrice =
+          typeof existingSlot.session["Price Amount"] === "number"
+            ? (existingSlot.session["Price Amount"] as number)
+            : null;
+        if (
+          price !== null &&
+          (existingPrice === null || price < existingPrice)
+        ) {
+          existingSlot.session["Price Amount"] = price;
+          existingSlot.session["Cost Structure"] = cost;
+          existingSlot.session.Frequency = frequency;
+        }
+        if (!text(existingSlot.session.Notes) && notes) {
+          existingSlot.session.Notes = notes;
+        }
+        if (!text(existingSlot.session.Description) && classDescription) {
+          existingSlot.session.Description = classDescription;
+        }
+        continue;
+      }
+
+      if (!isMultiDay && existingSlot?.fromMultiDay) {
+        const existingPrice =
+          typeof existingSlot.session["Price Amount"] === "number"
+            ? (existingSlot.session["Price Amount"] as number)
+            : null;
+        if (
+          price !== null &&
+          (existingPrice === null || price < existingPrice)
+        ) {
+          existingSlot.session["Price Amount"] = price;
+          existingSlot.session["Cost Structure"] = cost;
+          existingSlot.session.Frequency = frequency;
+        }
+        if (notes) {
+          existingSlot.session.Notes = notes;
+        }
+        if (classDescription) {
+          existingSlot.session.Description = classDescription;
+        }
+        existingSlot.fromMultiDay = false;
+        continue;
+      }
+
+      const session: Row = {
+        "Session ID": `SES-${pad(sessSeq++)}`,
+        "Activity ID": actId,
+        "Location ID": locId,
+        "Session Name":
+          [day, startTime && endTime ? `${startTime}–${endTime}` : null]
+            .filter(Boolean)
+            .join(" · ") || className,
+        "Start Date": null,
+        "End Date": null,
+        "Start Time": startTime,
+        "End Time": endTime,
+        "Days of the Week": day,
+        "Schedule Pattern": "Recurring Weekly",
+        "Minimum Age Override": ageMin,
+        "Maximum Age Override": ageMax,
+        "Price Amount": price,
+        "Cost Structure": cost,
+        Frequency: frequency,
+        "Price Notes": sessionDates,
+        Availability: "Available",
+        "Registration Opens": null,
+        "Registration Closes": null,
+        "Registration URL": sourceUrl,
+        Status: "Active",
+        "Source URL": sourceUrl,
+        "Last Verified": null,
+        Description: classDescription,
+        Notes: notes,
+      };
+      sessions.push(session);
+      if (!existingSlot) {
+        sessionBySlot.set(slotKey, { session, fromMultiDay: isMultiDay });
+      }
+    }
   }
 
   fs.mkdirSync(outputDir, { recursive: true });
