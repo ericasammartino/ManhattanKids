@@ -1,3 +1,5 @@
+import { normalizeMonth } from "@/lib/taxonomy";
+
 export type ActivityFilters = {
   search: string;
   /** Empty array means all categories. */
@@ -11,6 +13,8 @@ export type ActivityFilters = {
   /** Selected ages; empty = all ages. */
   ages: number[];
   days: string[];
+  /** Selected calendar months (e.g. "January"); empty = any month. */
+  months: string[];
   /** @deprecated Prefer `ages`. */
   age: number | null;
   ageMin: number | null;
@@ -22,6 +26,7 @@ export type ActivityFilters = {
   activityType: string;
   schedulePattern: string;
   day: string;
+  month: string;
 };
 
 function first(
@@ -75,6 +80,14 @@ export function resolveActivityFilters(
     (s) => s !== "all"
   );
   const days = parseList(searchParams.day).filter((d) => d !== "all");
+  const months = Array.from(
+    new Set(
+      parseList(searchParams.month)
+        .filter((m) => m !== "all")
+        .map((m) => normalizeMonth(m))
+        .filter((m): m is NonNullable<typeof m> => Boolean(m))
+    )
+  );
   const locationBands = parseList(searchParams.location).filter(
     (l) => l !== "all"
   );
@@ -112,6 +125,7 @@ export function resolveActivityFilters(
     schedulePatterns,
     ages,
     days,
+    months,
     age,
     ageMin,
     ageMax,
@@ -121,6 +135,7 @@ export function resolveActivityFilters(
     activityType: activityTypes[0] ?? defaultType,
     schedulePattern: schedulePatterns[0] ?? "all",
     day: days[0] ?? "all",
+    month: months[0] ?? "all",
   };
 }
 

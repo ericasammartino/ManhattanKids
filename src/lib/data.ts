@@ -16,13 +16,16 @@ import {
   PRIMARY_CATEGORIES,
   SUBCATEGORIES,
   DAYS_OF_WEEK,
+  MONTHS_OF_YEAR,
   normalizePrimaryCategory,
+  normalizeMonth,
   activityMatchesSubcategory,
   sessionRunsOnDay,
   splitSubcategories,
   CATEGORY_PILL_FALLBACK,
   getCategoryPillStyle,
 } from "@/lib/taxonomy";
+import { parseMonthsFromText, sessionRunsInMonth } from "@/lib/session-display";
 import { locationBandIdFromCrossStreets } from "@/lib/location-bands";
 
 /** Match category filter against single or multi-tag Primary Category values. */
@@ -456,6 +459,7 @@ export function getActivityById(id: string): EnrichedActivity | undefined {
 export const CATEGORIES = [...PRIMARY_CATEGORIES];
 export const SUBCATEGORY_OPTIONS = [...SUBCATEGORIES];
 export const DAY_OPTIONS = [...DAYS_OF_WEEK];
+export const MONTH_OPTIONS = [...MONTHS_OF_YEAR];
 
 /**
  * Tailwind class pairs for legacy call sites. Prefer getCategoryPillStyle()
@@ -513,6 +517,7 @@ export type FilterState = {
   subcategories?: string[];
   locationBands?: string[];
   days?: string[];
+  months?: string[];
   ages?: number[];
   activityTypes?: string[];
   schedulePatterns?: string[];
@@ -523,6 +528,7 @@ export type FilterState = {
   activityType: string;
   schedulePattern: string;
   day: string;
+  month: string;
 };
 
 function asAge(value: unknown): number | null {
@@ -567,6 +573,19 @@ function activityRunsOnDay(
   const sessions = activity.sessions ?? [];
   if (sessions.length === 0) return false;
   return sessions.some((s) => sessionRunsOnDay(s["Days of the Week"], day));
+}
+
+function activityRunsInMonth(
+  activity: EnrichedActivity,
+  month: string
+): boolean {
+  const canonical = normalizeMonth(month);
+  if (!canonical) return false;
+  const sessions = activity.sessions ?? [];
+  if (sessions.some((s) => sessionRunsInMonth(s, canonical))) {
+    return true;
+  }
+  return parseMonthsFromText(activity["Seasonal Tags"]).includes(canonical);
 }
 
 export function filterActivities(
@@ -679,6 +698,16 @@ export function filterActivities(
           : [];
     if (days.length > 0) {
       if (!days.some((d) => activityRunsOnDay(activity, d))) return false;
+    }
+
+    const months =
+      filters.months && filters.months.length > 0
+        ? filters.months
+        : filters.month && filters.month !== "all"
+          ? [filters.month]
+          : [];
+    if (months.length > 0) {
+      if (!months.some((m) => activityRunsInMonth(activity, m))) return false;
     }
 
     return true;

@@ -25,7 +25,7 @@ export const RESULT_PILL_CATEGORIES = [
   "STEM",
 ] as const;
 
-/** Subcategories typically offered under each primary category (Session-21). */
+/** Subcategories typically offered under each primary category (Primary Database 27). */
 export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
   "Afterschool Care": [
     "Arts & Crafts",
@@ -48,6 +48,7 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Acting",
     "Arts & Crafts",
     "Ballet",
+    "Brass",
     "Ceramics",
     "Contemporary",
     "Cooking & Baking",
@@ -63,12 +64,15 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Photography",
     "Piano",
     "Sewing",
+    "Strings",
     "Tap",
     "Theater",
     "Visual Arts",
+    "Woodwinds",
   ],
   Entertainment: ["Movies", "Attractions"],
   "Learning & Enrichment": [
+    "Academic",
     "Chess",
     "Coding",
     "Educational",
@@ -76,32 +80,44 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Gaming",
     "Homework Help",
     "Language",
+    "Life Skills",
     "Math",
     "Reading",
     "Robotics",
     "Science",
     "Technology",
+    "Test Prep",
+    "Tutoring",
     "Writing",
   ],
   "Museums & Culture": ["Museums", "Cultural Experiences", "History"],
-  "Play & Exploration": ["Gaming", "Indoor Play", "Outdoor Activities"],
+  "Play & Exploration": [
+    "Gaming",
+    "Indoor Play",
+    "Outdoor Activities",
+    "Parks & Playgrounds",
+  ],
   "Sports & Movement": [
     "Ballet",
     "Baseball",
     "Basketball",
     "Contemporary",
     "Dance",
+    "Fitness",
     "Gymnastics",
     "Hip-hop",
     "Jazz",
     "Martial Arts",
+    "Ninja Warrior",
     "Performing Arts",
+    "Skateboarding",
     "Soccer",
     "Sports",
     "Swimming",
     "Tap",
     "Tennis",
     "Theater",
+    "Yoga",
   ],
   STEM: [
     "Coding",
@@ -112,10 +128,11 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Robotics",
     "Science",
     "Technology",
+    "Tutoring",
   ],
 };
 
-/** Updated subcategory list (Erica Lists sheet screenshots 2026-11-23). */
+/** Canonical subcategory list from Primary Database 27 Lists sheet (62 items). */
 export const ACTIVE_SUBCATEGORIES = [
   "Academic",
   "Acting",
@@ -124,6 +141,7 @@ export const ACTIVE_SUBCATEGORIES = [
   "Ballet",
   "Baseball",
   "Basketball",
+  "Brass",
   "Ceramics",
   "Chess",
   "Coding",
@@ -152,6 +170,7 @@ export const ACTIVE_SUBCATEGORIES = [
   "Movies",
   "Museums",
   "Music",
+  "Ninja Warrior",
   "Outdoor Activities",
   "Painting",
   "Parks & Playgrounds",
@@ -162,8 +181,10 @@ export const ACTIVE_SUBCATEGORIES = [
   "Robotics",
   "Science",
   "Sewing",
+  "Skateboarding",
   "Soccer",
   "Sports",
+  "Strings",
   "Swimming",
   "Tap",
   "Technology",
@@ -172,6 +193,7 @@ export const ACTIVE_SUBCATEGORIES = [
   "Theater",
   "Tutoring",
   "Visual Arts",
+  "Woodwinds",
   "Writing",
   "Yoga",
 ] as const;
@@ -198,6 +220,61 @@ export const DAYS_OF_WEEK = [
 ] as const;
 
 export type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
+
+export const MONTHS_OF_YEAR = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+export type MonthOfYear = (typeof MONTHS_OF_YEAR)[number];
+
+const MONTH_INDEX_BY_TOKEN: Record<string, number> = {
+  jan: 0,
+  january: 0,
+  feb: 1,
+  february: 1,
+  mar: 2,
+  march: 2,
+  apr: 3,
+  april: 3,
+  may: 4,
+  jun: 5,
+  june: 5,
+  jul: 6,
+  july: 6,
+  aug: 7,
+  august: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  oct: 9,
+  october: 9,
+  nov: 10,
+  november: 10,
+  dec: 11,
+  december: 11,
+};
+
+/** Normalize full or abbreviated month names ("Jan" / "january" → "January"). */
+export function normalizeMonth(
+  value: string | null | undefined
+): MonthOfYear | null {
+  if (!value) return null;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return null;
+  const idx = MONTH_INDEX_BY_TOKEN[trimmed];
+  return idx !== undefined ? MONTHS_OF_YEAR[idx] : null;
+}
 
 /**
  * Map historical / alternate primary-category labels onto the taxonomy.

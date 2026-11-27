@@ -312,7 +312,7 @@ export default function GroupedActivityCard({
         </div>
 
         {/* Meta: ages + days; location */}
-        <div className="mt-3.5 space-y-2 text-[12px] text-[#4B5563]">
+        <div className="mb-3 mt-3.5 space-y-2 text-[12px] text-[#4B5563]">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {ageRange && (
               <p className="inline-flex items-center gap-1.5">
@@ -345,17 +345,20 @@ export default function GroupedActivityCard({
         </div>
 
         {/* Footer: price / frequency | View class times */}
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-[#EEE9E1] pt-3">
-          <p className="min-w-0 text-[12px] font-bold leading-snug text-[#1D2B4B] sm:text-[13px]">
+        <div className="mt-auto flex flex-nowrap items-center justify-between gap-2 border-t border-[#EEE9E1] pt-3">
+          <p
+            title={priceLabel}
+            className="min-w-0 flex-1 truncate whitespace-nowrap text-[11.5px] font-bold leading-none text-[#1D2B4B] sm:text-[12px]"
+          >
             {priceLabel}
           </p>
           <button
             type="button"
             onClick={toggleExpanded}
-            className="inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-[#3B6EA5] transition-colors hover:text-[#1D2B4B]"
+            className="inline-flex flex-shrink-0 items-center gap-0.5 whitespace-nowrap text-[11.5px] font-semibold leading-none text-[#3B6EA5] transition-colors hover:text-[#1D2B4B] sm:text-[12px]"
           >
             View class times
-            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+            <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
           </button>
         </div>
       </div>

@@ -1,5 +1,11 @@
 import type { Session } from "@/types";
-import { formatDayRange, parseDaysOfWeek } from "@/lib/taxonomy";
+import {
+  formatDayRange,
+  MONTHS_OF_YEAR,
+  normalizeMonth,
+  parseDaysOfWeek,
+  type MonthOfYear,
+} from "@/lib/taxonomy";
 
 function formatClock(time: string | null | undefined): string {
   if (!time) return "";
@@ -43,20 +49,152 @@ const MONTHS: Record<string, number> = {
   december: 11,
 };
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTH_NAMES = MONTHS_OF_YEAR;
+
+const MONTH_TOKEN_PATTERN =
+  "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+
+const MONTH_RANGE_RE = new RegExp(
+  `\\b(${MONTH_TOKEN_PATTERN})(?:\\s+\\d{1,2}(?:,?\\s*\\d{4})?)?\\s*[–—-]\\s*(${MONTH_TOKEN_PATTERN})(?:\\s+\\d{1,2}(?:,?\\s*\\d{4})?)?\\b`,
+  "gi"
+);
+
+const SINGLE_MONTH_DATE_RE = new RegExp(
+  `\\b(${MONTH_TOKEN_PATTERN})\\s+\\d{1,2}(?:,?\\s*\\d{4})?\\b`,
+  "gi"
+);
+
+function expandMonthIndices(startMonth: number, endMonth: number): number[] {
+  const out: number[] = [];
+  let m = startMonth;
+  for (let i = 0; i < 12; i++) {
+    out.push(m);
+    if (m === endMonth) break;
+    m = (m + 1) % 12;
+  }
+  return out;
+}
+
+function parseIsoOrUsDate(
+  raw: string | null | undefined
+): { year: number | null; month: number } | null {
+  if (!raw) return null;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return null;
+
+  const iso = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) {
+    const month = Number(iso[2]) - 1;
+    if (month >= 0 && month <= 11) {
+      return { year: Number(iso[1]), month };
+    }
+  }
+
+  const us = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (us) {
+    const month = Number(us[1]) - 1;
+    const yr = Number(us[3]);
+    if (month >= 0 && month <= 11) {
+      return { year: yr < 100 ? 2000 + yr : yr, month };
+    }
+  }
+
+  const loose = parseLooseDate(trimmed);
+  if (loose) {
+    return { year: loose.year ?? null, month: loose.month };
+  }
+  return null;
+}
+
+/**
+ * Extract active calendar months (0–11) from freeform session date/term text
+ * such as "Jan 18 – Jun 4", "Sep - Jun", "Jul – Jun", "Jan 11, 2027",
+ * "Winter/Spring", or "school year".
+ */
+export function parseMonthsFromText(
+  raw: string | null | undefined
+): MonthOfYear[] {
+  if (!raw) return [];
+  const text = String(raw).trim();
+  if (!text || /^[-–—]+$/.test(text)) return [];
+
+  const found = new Set<number>();
+  let match: RegExpExecArray | null;
+
+  MONTH_RANGE_RE.lastIndex = 0;
+  while ((match = MONTH_RANGE_RE.exec(text)) !== null) {
+    const s = MONTHS[match[1].toLowerCase()];
+    const e = MONTHS[match[2].toLowerCase()];
+    if (s !== undefined && e !== undefined) {
+      for (const m of expandMonthIndices(s, e)) found.add(m);
+    }
+  }
+  if (found.size > 0) {
+    return [...found].sort((a, b) => a - b).map((m) => MONTH_NAMES[m]);
+  }
+
+  SINGLE_MONTH_DATE_RE.lastIndex = 0;
+  while ((match = SINGLE_MONTH_DATE_RE.exec(text)) !== null) {
+    const s = MONTHS[match[1].toLowerCase()];
+    if (s !== undefined) found.add(s);
+  }
+  if (found.size > 0) {
+    return [...found].sort((a, b) => a - b).map((m) => MONTH_NAMES[m]);
+  }
+
+  if (/\bschool\s*year\b/i.test(text)) {
+    for (const m of expandMonthIndices(8, 5)) found.add(m);
+  }
+  if (/\b(?:year[\s-]*round|all[\s-]*year)\b/i.test(text)) {
+    for (let m = 0; m < 12; m++) found.add(m);
+  }
+  if (/\bwinter\b/i.test(text)) {
+    for (const m of [0, 1, 2]) found.add(m);
+  }
+  if (/\bspring\b/i.test(text)) {
+    for (const m of [2, 3, 4, 5]) found.add(m);
+  }
+  if (/\bsummer\b/i.test(text)) {
+    for (const m of [5, 6, 7]) found.add(m);
+  }
+  if (/\bfall\b/i.test(text)) {
+    for (const m of [8, 9, 10, 11]) found.add(m);
+  }
+
+  return [...found].sort((a, b) => a - b).map((m) => MONTH_NAMES[m]);
+}
+
+/** Return the active calendar months for a single session. */
+export function sessionActiveMonths(session: Session): MonthOfYear[] {
+  const start = parseIsoOrUsDate(session["Start Date"]);
+  const end = parseIsoOrUsDate(session["End Date"]);
+
+  if (start && end) {
+    if (
+      start.year !== null &&
+      end.year !== null &&
+      (end.year - start.year) * 12 + (end.month - start.month) >= 11
+    ) {
+      return [...MONTH_NAMES];
+    }
+    return expandMonthIndices(start.month, end.month)
+      .sort((a, b) => a - b)
+      .map((m) => MONTH_NAMES[m]);
+  }
+  if (start) return [MONTH_NAMES[start.month]];
+  if (end) return [MONTH_NAMES[end.month]];
+
+  const fromPriceNotes = parseMonthsFromText(session["Price Notes"]);
+  if (fromPriceNotes.length > 0) return fromPriceNotes;
+
+  return parseMonthsFromText(session.Notes);
+}
+
+export function sessionRunsInMonth(session: Session, month: string): boolean {
+  const canonical = normalizeMonth(month);
+  if (!canonical) return false;
+  return sessionActiveMonths(session).includes(canonical);
+}
 
 export function collectSessionDays(sessions: Session[]): string[] {
   const found = new Set<string>();
@@ -279,7 +417,7 @@ export function sessionSeasonMeta(sessions: Session[]): {
   const end = parseLooseDate(rangeMatch[2]);
   if (!start || !end) return { seasonBadge: null, dateRange: null };
 
-  let year =
+  const year =
     end.year ??
     start.year ??
     (() => {
