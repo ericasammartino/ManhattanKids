@@ -14,7 +14,7 @@ import {
   getCategoryPillStyle,
   normalizePrimaryCategory,
 } from "@/lib/taxonomy";
-import { MapPin, Clock, Calendar, ExternalLink, ArrowUpRight, ArrowLeft, Tag } from "lucide-react";
+import { MapPin, Clock, Calendar, ExternalLink, ArrowUpRight, ArrowLeft, Info, Tag } from "lucide-react";
 import OrgLogoMark from "@/components/OrgLogoMark";
 
 interface Props {
@@ -59,7 +59,9 @@ export default async function ActivityDetailPage({ params }: Props) {
       {/* Hero image */}
       <div
         className={`relative h-64 md:h-80 rounded-2xl overflow-hidden mb-6 ${
-          isLogo || textFallback ? "bg-[#f3eee4]" : "bg-gray-100"
+          isLogo || textFallback
+            ? "bg-white border border-[#E5DFD5]"
+            : "bg-gray-100"
         }`}
       >
         <OrgLogoMark
@@ -159,7 +161,15 @@ export default async function ActivityDetailPage({ params }: Props) {
                       )}
                     </div>
                     {session["Notes"] && (
-                      <p className="text-xs text-gray-500 mt-1.5">{session["Notes"]}</p>
+                      <div className="mt-2">
+                        <span className="inline-flex max-w-full items-start gap-1.5 rounded-2xl border border-[#E8E1D5] bg-[#F8F5F0] px-2.5 py-1 text-[12px] font-medium leading-snug text-[#5A5466]">
+                          <Info
+                            className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8A8094]"
+                            aria-hidden
+                          />
+                          <span className="break-words">{session["Notes"]}</span>
+                        </span>
+                      </div>
                     )}
                     {(() => {
                       const sessionRegUrl = safeExternalUrl(session["Registration URL"]);
@@ -182,9 +192,14 @@ export default async function ActivityDetailPage({ params }: Props) {
 
           {/* Notes */}
           {activity["Notes"] && (
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 text-sm text-amber-800">
-              <span className="font-semibold">Note: </span>
-              {activity["Notes"]}
+            <div className="flex flex-wrap gap-2" aria-label="Notes">
+              <span className="inline-flex max-w-full items-start gap-1.5 rounded-2xl border border-[#E8E1D5] bg-[#F8F5F0] px-3 py-1.5 text-[12.5px] font-medium leading-snug text-[#5A5466]">
+                <Info
+                  className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8A8094]"
+                  aria-hidden
+                />
+                <span className="break-words">{activity["Notes"]}</span>
+              </span>
             </div>
           )}
         </div>

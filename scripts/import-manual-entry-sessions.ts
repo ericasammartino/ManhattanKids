@@ -12,6 +12,51 @@
 import * as fs from "fs";
 import * as path from "path";
 import { logoForOrganization } from "../src/data/org-logos";
+import { ACTIVE_SUBCATEGORIES, splitSubcategories } from "../src/lib/taxonomy";
+
+const CANONICAL_SUBCATEGORY_BY_LOWER = new Map<string, string>(
+  ACTIVE_SUBCATEGORIES.map((s) => [s.toLowerCase(), s])
+);
+
+function normalizeSubcategoryList(
+  raw: string | null,
+  unknownTracker?: Set<string>
+): string | null {
+  const tokens = splitSubcategories(raw);
+  if (tokens.length === 0) return null;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const token of tokens) {
+    const canonical =
+      CANONICAL_SUBCATEGORY_BY_LOWER.get(token.toLowerCase()) ?? token;
+    if (!CANONICAL_SUBCATEGORY_BY_LOWER.has(token.toLowerCase())) {
+      unknownTracker?.add(token);
+    }
+    if (!seen.has(canonical)) {
+      seen.add(canonical);
+      out.push(canonical);
+    }
+  }
+  return out.length ? out.join(", ") : null;
+}
+
+function mergeSubcategories(
+  existing: string | null,
+  incoming: string | null
+): string | null {
+  if (!incoming) return existing;
+  if (!existing) return incoming;
+  const tokens = [...splitSubcategories(existing), ...splitSubcategories(incoming)];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of tokens) {
+    if (!seen.has(t)) {
+      seen.add(t);
+      out.push(t);
+    }
+  }
+  return out.length ? out.join(", ") : null;
+}
 
 type Row = Record<string, unknown>;
 
@@ -492,6 +537,7 @@ async function main() {
   const locations: Row[] = [];
   const activities: Row[] = [];
   const sessions: Row[] = [];
+  const unknownSubcategories = new Set<string>();
 
   let orgSeq = 1;
   let locSeq = 1;
@@ -506,7 +552,10 @@ async function main() {
       (categoryRaw && CATEGORY_MAP[categoryRaw]) ||
       categoryRaw ||
       "Learning & Enrichment";
-    const subcategory = text(row.Subcategory);
+    const subcategory = normalizeSubcategoryList(
+      text(row.Subcategory),
+      unknownSubcategories
+    );
     const ageMin = num(row["Minimum Age"]);
     const ageMax = num(row["Maximum Age"]);
     const days = text(row["Day(s)"]);
@@ -660,6 +709,12 @@ async function main() {
       if (sourceUrl && !text(existing["Source URL"])) {
         existing["Source URL"] = sourceUrl;
       }
+      if (subcategory) {
+        existing.Subcategory = mergeSubcategories(
+          text(existing.Subcategory),
+          subcategory
+        );
+      }
       if (notes) {
         const list = activityNotesById.get(existing["Activity ID"] as string)!;
         if (!list.includes(notes)) {
@@ -782,6 +837,12 @@ async function main() {
   const incomingPath = path.join(outputDir, "incoming.json");
   if (!fs.existsSync(incomingPath)) {
     fs.writeFileSync(incomingPath, "[]\n");
+  }
+
+  if (unknownSubcategories.size > 0) {
+    console.warn(
+      `⚠️ Unrecognized subcategories not in ACTIVE_SUBCATEGORIES: ${[...unknownSubcategories].sort().join(", ")}`
+    );
   }
 
   console.log(

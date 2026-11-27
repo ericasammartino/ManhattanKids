@@ -25,7 +25,7 @@ export const RESULT_PILL_CATEGORIES = [
   "STEM",
 ] as const;
 
-/** Subcategories typically offered under each primary category (Primary Database 28). */
+/** Subcategories typically offered under each primary category (Primary Database 31). */
 export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
   "Afterschool Care": [
     "Arts & Crafts",
@@ -135,7 +135,7 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
   ],
 };
 
-/** Canonical subcategory list from Primary Database 28 Lists sheet (63 items). */
+/** Canonical subcategory list from Primary Database 31 Lists sheet, column B (63 items). */
 export const ACTIVE_SUBCATEGORIES = [
   "Academic",
   "Acting",
