@@ -50,7 +50,7 @@ export const ORG_LOGOS: Record<string, string> = {
   "Modern Martial Arts": "/logos/modern-martial-arts.png",
   "Steps on Broadway Academy": "/logos/steps-on-broadway.png",
   "Launch Math + Science Centers": "/logos/launch-math.png",
-  "Baker Piano Studio": "/logos/baker-piano.png",
+  "Baker Piano Studio": "/logos/baker-piano-studio.png",
   "UWS Piano School": "/logos/uws-piano.png",
   "The Art Studio NY": "/logos/art-studio-ny.png",
   "Children's Art Classes – NYC": "/logos/childrens-art-classes.png",
