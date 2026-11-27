@@ -28,6 +28,7 @@ import {
   ArrowUpRight,
   Calendar,
   ChevronDown,
+  Info,
   MapPin,
   Users,
 } from "lucide-react";
@@ -147,7 +148,7 @@ export default function GroupedActivityCard({
           {/* Header: logo | divider | taxonomy + title */}
           <div className="relative z-[1] flex gap-3 sm:gap-4">
             <div className="flex w-[120px] flex-shrink-0 flex-col items-center justify-center sm:w-[144px]">
-              <div className="flex h-[88px] w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[100px]">
+              <div className="flex h-[88px] w-full items-center justify-center overflow-hidden rounded-xl border border-[#E5DFD5] bg-white px-2.5 py-2 sm:h-[100px]">
                 <OrgLogoMark
                   src={imgSrc}
                   alt={provider || activity["Activity Name"]}
@@ -192,19 +193,19 @@ export default function GroupedActivityCard({
             </div>
           </div>
 
-          {/* Info row: age pill + season/date */}
-          <div className="relative z-[1] flex flex-wrap items-center gap-x-3 gap-y-2">
+          {/* Info row: age pill + season/date + location */}
+          <div className="relative z-[1] flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
             {ageRange && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFE8C2] px-2.5 py-1 text-[11px] font-semibold text-[#8A5A3B]">
-                <Users className="h-3.5 w-3.5" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFE8C2] px-3.5 py-1.5 text-[13.5px] font-bold text-[#7A4B2A] sm:text-[14px]">
+                <Users className="h-4 w-4 flex-shrink-0" aria-hidden />
                 {ageRange}
               </span>
             )}
             {(seasonLine || daySummary) && (
               <>
-                <span className="hidden h-4 w-px bg-[#E5E0D8] sm:block" aria-hidden />
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-[#4B5563]">
-                  <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]" aria-hidden />
+                <span className="hidden h-[18px] w-px bg-[#E5E0D8] sm:block" aria-hidden />
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-[14px] font-semibold text-[#1D2B4B] sm:text-[14.5px]">
+                  <Calendar className="h-4 w-4 flex-shrink-0 text-[#6B6578]" aria-hidden />
                   <span className="truncate">
                     {seasonLine || daySummary}
                   </span>
@@ -213,9 +214,9 @@ export default function GroupedActivityCard({
             )}
             {locationLabel && (
               <>
-                <span className="hidden h-4 w-px bg-[#E5E0D8] sm:block" aria-hidden />
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] text-[#4B5563]">
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-[#6B6578]" aria-hidden />
+                <span className="hidden h-[18px] w-px bg-[#E5E0D8] sm:block" aria-hidden />
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-[14px] font-semibold text-[#1D2B4B] sm:text-[14.5px]">
+                  <MapPin className="h-4 w-4 flex-shrink-0 text-[#6B6578]" aria-hidden />
                   <span className="truncate">{locationLabel}</span>
                 </span>
               </>
@@ -239,21 +240,22 @@ export default function GroupedActivityCard({
           </p>
 
           {cardNotes.length > 0 && (
-            <div className="relative z-[1] rounded-xl border border-[#EFE6D8] bg-[#FFF9F2] px-3 py-2.5">
-              <h4 className="text-[11px] font-bold uppercase tracking-wide text-[#8A5A3B]">
-                Notes
-              </h4>
-              {cardNotes.length === 1 ? (
-                <p className="mt-1 text-[12.5px] leading-relaxed text-[#4B5563]">
-                  {cardNotes[0]}
-                </p>
-              ) : (
-                <ul className="mt-1 space-y-0.5 text-[12.5px] leading-relaxed text-[#4B5563]">
-                  {cardNotes.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              )}
+            <div
+              className="relative z-[1] flex flex-wrap gap-2"
+              aria-label="Notes"
+            >
+              {cardNotes.map((line) => (
+                <span
+                  key={line}
+                  className="inline-flex max-w-full items-start gap-1.5 rounded-2xl border border-[#E8E1D5] bg-[#F8F5F0] px-3 py-1.5 text-[12px] font-medium leading-snug text-[#5A5466]"
+                >
+                  <Info
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8A8094]"
+                    aria-hidden
+                  />
+                  <span className="break-words">{line}</span>
+                </span>
+              ))}
             </div>
           )}
 
@@ -319,7 +321,7 @@ export default function GroupedActivityCard({
       <div className="flex flex-1 flex-col px-4 pb-3.5 pt-4 sm:px-5">
         {/* Header: logo | title + org */}
         <div className="flex items-start gap-3">
-          <div className="flex h-[68px] w-[68px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-[76px] sm:w-[76px]">
+          <div className="flex h-[68px] w-[68px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E5DFD5] bg-white sm:h-[76px] sm:w-[76px]">
             <OrgLogoMark
               src={imgSrc}
               alt={provider || activity["Activity Name"]}

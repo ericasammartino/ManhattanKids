@@ -33,7 +33,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
     : "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300";
   const imgWrapClass =
     isLogo || textFallback
-      ? "relative overflow-hidden bg-[#f3eee4]"
+      ? "relative overflow-hidden bg-white border-b border-[#E5DFD5]"
       : "relative overflow-hidden bg-gray-100";
   const logoMark = (
     <OrgLogoMark
@@ -55,7 +55,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
   if (variant === "highlight") {
     return (
       <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
-        <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div className="relative overflow-hidden rounded-2xl border border-[#E8E2D8] bg-white shadow-sm hover:shadow-md transition-shadow">
           <div className={`${imgWrapClass} h-44`}>{logoMark}</div>
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
@@ -89,7 +89,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
   if (variant === "compact") {
     return (
       <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
-        <div className="relative overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div className="relative overflow-hidden rounded-xl border border-[#E8E2D8] bg-white shadow-sm hover:shadow-md transition-shadow">
           <div className={`${imgWrapClass} h-32`}>{logoMark}</div>
           <div className="p-3">
             <p className="font-medium text-sm text-gray-900 leading-tight line-clamp-2 mb-1">
@@ -109,7 +109,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
 
   return (
     <Link href={`/activities/${activity["Activity ID"]}`} className="block group">
-      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-[#E8E2D8] overflow-hidden">
         <div className={`${imgWrapClass} h-48`}>
           {logoMark}
           {category && category !== "default" && (
