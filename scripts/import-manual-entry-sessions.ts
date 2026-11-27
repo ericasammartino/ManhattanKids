@@ -107,9 +107,11 @@ const ORG_WEBSITES: Record<string, string> = {
   "New York Empire Baseball": "https://www.nyempirebaseball.com/",
   "Mo’ Motion": "https://www.momotiondance.com/",
   "Soccer Stars": "https://www.soccerstars.com/",
+  "Super Soccer Stars": "https://www.soccerstars.com/",
   "Modern Martial Arts": "https://www.modernmartialarts.com/",
   "Steps on Broadway Academy": "https://www.stepsnyc.com/",
   "Launch Math + Science Centers": "https://www.launcheducation.com/",
+  "Launch @ FunFit": "https://www.launcheducation.com/",
   "Baker Piano Studio": "https://www.bakerpianostudio.com/",
   "UWS Piano School": "https://www.uwspianoschool.com/",
   "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
