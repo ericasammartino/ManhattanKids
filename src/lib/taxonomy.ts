@@ -25,7 +25,7 @@ export const RESULT_PILL_CATEGORIES = [
   "STEM",
 ] as const;
 
-/** Subcategories typically offered under each primary category (Primary Database 27). */
+/** Subcategories typically offered under each primary category (Primary Database 28). */
 export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
   "Afterschool Care": [
     "Arts & Crafts",
@@ -58,11 +58,13 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Drawing",
     "Hip-hop",
     "Jazz",
+    "Language",
     "Music",
     "Painting",
     "Performing Arts",
     "Photography",
     "Piano",
+    "Russian",
     "Sewing",
     "Strings",
     "Tap",
@@ -84,6 +86,7 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
     "Math",
     "Reading",
     "Robotics",
+    "Russian",
     "Science",
     "Technology",
     "Test Prep",
@@ -132,7 +135,7 @@ export const CATEGORY_SUBCATEGORIES: Record<string, string[]> = {
   ],
 };
 
-/** Canonical subcategory list from Primary Database 27 Lists sheet (62 items). */
+/** Canonical subcategory list from Primary Database 28 Lists sheet (63 items). */
 export const ACTIVE_SUBCATEGORIES = [
   "Academic",
   "Acting",
@@ -179,6 +182,7 @@ export const ACTIVE_SUBCATEGORIES = [
   "Piano",
   "Reading",
   "Robotics",
+  "Russian",
   "Science",
   "Sewing",
   "Skateboarding",
