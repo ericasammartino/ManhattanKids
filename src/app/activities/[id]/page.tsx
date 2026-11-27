@@ -8,12 +8,13 @@ import {
   formatTime,
   CATEGORY_ICONS,
   resolveActivityImage,
+  safeExternalUrl,
 } from "@/lib/data";
 import {
   getCategoryPillStyle,
   normalizePrimaryCategory,
 } from "@/lib/taxonomy";
-import { MapPin, Clock, Calendar, ExternalLink, ArrowLeft, Tag } from "lucide-react";
+import { MapPin, Clock, Calendar, ExternalLink, ArrowUpRight, ArrowLeft, Tag } from "lucide-react";
 import OrgLogoMark from "@/components/OrgLogoMark";
 
 interface Props {
@@ -40,6 +41,9 @@ export default async function ActivityDetailPage({ params }: Props) {
   const ageRange = formatAgeRange(activity["Age Minimum"], activity["Age Maximum"]);
 
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
+  const registrationUrl = safeExternalUrl(activity["Registration URL"]);
+  const sourceUrl = safeExternalUrl(activity["Source URL"]);
+  const locationWebsite = safeExternalUrl(activity.location?.["Website"]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -157,16 +161,19 @@ export default async function ActivityDetailPage({ params }: Props) {
                     {session["Notes"] && (
                       <p className="text-xs text-gray-500 mt-1.5">{session["Notes"]}</p>
                     )}
-                    {session["Registration URL"] && (
-                      <a
-                        href={session["Registration URL"]}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-xs text-green-700 hover:text-green-900 font-medium"
-                      >
-                        Register <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+                    {(() => {
+                      const sessionRegUrl = safeExternalUrl(session["Registration URL"]);
+                      return sessionRegUrl ? (
+                        <a
+                          href={sessionRegUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-green-700 hover:text-green-900 font-medium"
+                        >
+                          Register <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : null;
+                    })()}
                   </div>
                 ))}
               </div>
@@ -231,9 +238,9 @@ export default async function ActivityDetailPage({ params }: Props) {
               </div>
             )}
 
-            {activity["Registration URL"] && (
+            {registrationUrl && (
               <a
-                href={activity["Registration URL"]}
+                href={registrationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -244,9 +251,9 @@ export default async function ActivityDetailPage({ params }: Props) {
               </a>
             )}
 
-            {activity["Source URL"] && !activity["Registration URL"] && (
+            {sourceUrl && !registrationUrl && (
               <a
-                href={activity["Source URL"]}
+                href={sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -284,14 +291,15 @@ export default async function ActivityDetailPage({ params }: Props) {
                   </div>
                 )}
               </div>
-              {activity.location["Website"] && (
+              {locationWebsite && (
                 <a
-                  href={activity.location["Website"]}
+                  href={locationWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-green-700 hover:text-green-900 font-medium"
                 >
-                  Visit website <ExternalLink className="w-3 h-3" />
+                  <span>Website</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
                 </a>
               )}
             </div>

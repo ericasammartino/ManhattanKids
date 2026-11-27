@@ -5,6 +5,7 @@ import type { EnrichedActivity } from "@/types";
 import {
   formatAgeRange,
   resolveActivityImage,
+  safeExternalUrl,
 } from "@/lib/data";
 import {
   displaySubcategory,
@@ -24,9 +25,9 @@ import {
 } from "@/lib/session-display";
 import OrgLogoMark from "@/components/OrgLogoMark";
 import {
+  ArrowUpRight,
   Calendar,
   ChevronDown,
-  ExternalLink,
   MapPin,
   Users,
 } from "lucide-react";
@@ -98,11 +99,38 @@ export default function GroupedActivityCard({
     activity["Default Location Name"]?.trim() ||
     "";
   const website =
-    activity.organization?.Website?.trim() ||
-    activity["Registration URL"]?.trim() ||
-    activity["Source URL"]?.trim() ||
-    activity.location?.Website?.trim() ||
-    "";
+    safeExternalUrl(activity["Registration URL"]) ||
+    safeExternalUrl(activity["Source URL"]) ||
+    safeExternalUrl(activity.organization?.Website) ||
+    safeExternalUrl(activity.location?.Website) ||
+    null;
+  const cardNotes = useMemo(() => {
+    const dayNotePairs: { day: string | null; note: string }[] = [];
+    const distinctSessionNotes = new Set<string>();
+    for (const session of sessions) {
+      const note = session.Notes?.trim();
+      if (!note) continue;
+      distinctSessionNotes.add(note);
+      const day = parseDaysOfWeek(session["Days of the Week"])[0] ?? null;
+      dayNotePairs.push({ day, note });
+    }
+    if (distinctSessionNotes.size > 1) {
+      const seen = new Set<string>();
+      const lines: string[] = [];
+      for (const { day, note } of dayNotePairs) {
+        const line = day ? `${day}: ${note}` : note;
+        if (!seen.has(line)) {
+          seen.add(line);
+          lines.push(line);
+        }
+      }
+      return lines;
+    }
+    const single =
+      activity["Notes"]?.trim() ||
+      (distinctSessionNotes.size === 1 ? [...distinctSessionNotes][0] : null);
+    return single ? [single] : [];
+  }, [activity, sessions]);
   const priceLabel = formatPriceWithFrequency(sessions);
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const { seasonBadge, dateRange } = sessionSeasonMeta(sessions);
@@ -118,15 +146,15 @@ export default function GroupedActivityCard({
         <div className="open-class-card__header relative flex flex-1 flex-col gap-4 p-4 sm:p-5">
           {/* Header: logo | divider | taxonomy + title */}
           <div className="relative z-[1] flex gap-3 sm:gap-4">
-            <div className="flex w-[100px] flex-shrink-0 flex-col items-center justify-center sm:w-[120px]">
-              <div className="flex h-[74px] w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[84px]">
+            <div className="flex w-[120px] flex-shrink-0 flex-col items-center justify-center sm:w-[144px]">
+              <div className="flex h-[88px] w-full items-center justify-center rounded-xl bg-[#FFF6F0] px-2 py-2 sm:h-[100px]">
                 <OrgLogoMark
                   src={imgSrc}
                   alt={provider || activity["Activity Name"]}
                   textFallback={textFallback}
                   isLogo={isLogo}
                   className="max-h-full max-w-full object-contain"
-                  textClassName="text-[11px] sm:text-xs"
+                  textClassName="text-xs sm:text-[13px]"
                 />
               </div>
               {provider && !textFallback && (
@@ -199,18 +227,35 @@ export default function GroupedActivityCard({
               href={website}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-[1] -mt-1 inline-flex max-w-full items-center gap-1.5 text-[12px] font-semibold text-[#1D2B4B] hover:underline"
+              className="relative z-[1] -mt-1 inline-flex w-fit items-center gap-1 text-[12px] font-semibold text-[#3B6EA5] transition-colors hover:text-[#1D2B4B] hover:underline"
             >
-              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
-              <span className="truncate">
-                {website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-              </span>
+              <span>Website</span>
+              <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
             </a>
           )}
 
           <p className="relative z-[1] text-[13px] font-bold text-[#1D2B4B]">
             {priceLabel}
           </p>
+
+          {cardNotes.length > 0 && (
+            <div className="relative z-[1] rounded-xl border border-[#EFE6D8] bg-[#FFF9F2] px-3 py-2.5">
+              <h4 className="text-[11px] font-bold uppercase tracking-wide text-[#8A5A3B]">
+                Notes
+              </h4>
+              {cardNotes.length === 1 ? (
+                <p className="mt-1 text-[12.5px] leading-relaxed text-[#4B5563]">
+                  {cardNotes[0]}
+                </p>
+              ) : (
+                <ul className="mt-1 space-y-0.5 text-[12.5px] leading-relaxed text-[#4B5563]">
+                  {cardNotes.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Plain class-time schedule (non-interactive) */}
           {sessions.length > 0 && (
@@ -274,7 +319,7 @@ export default function GroupedActivityCard({
       <div className="flex flex-1 flex-col px-4 pb-3.5 pt-4 sm:px-5">
         {/* Header: logo | title + org */}
         <div className="flex items-start gap-3">
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-16 sm:w-16">
+          <div className="flex h-[68px] w-[68px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#FFF8F2] sm:h-[76px] sm:w-[76px]">
             <OrgLogoMark
               src={imgSrc}
               alt={provider || activity["Activity Name"]}
@@ -285,7 +330,7 @@ export default function GroupedActivityCard({
                   ? "h-full w-full object-contain p-1.5"
                   : "h-full w-full object-cover"
               }
-              textClassName="text-[9px] sm:text-[10px] px-1"
+              textClassName="text-[10px] sm:text-[11px] px-1.5"
             />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">

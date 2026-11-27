@@ -76,6 +76,7 @@ export interface Activity {
   "Source URL": string | null;
   "Status": string | null;
   "Last Verified": string | null;
+  /** Parent-facing notes from Manual Entry Session "Notes" column. */
   "Notes": string | null;
 }
 
@@ -106,6 +107,7 @@ export interface Session {
   "Last Verified": string | null;
   /** Class blurb from Manual Entry "Class Description" column. */
   "Description": string | null;
+  /** Parent-facing notes from Manual Entry Session "Notes" column. */
   "Notes": string | null;
 }
 

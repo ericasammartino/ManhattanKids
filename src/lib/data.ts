@@ -88,6 +88,23 @@ function nonempty(value: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
+/** Validate external link hrefs so only http: / https: URLs are rendered. */
+export function safeExternalUrl(
+  raw: string | null | undefined
+): string | null {
+  const value = nonempty(raw);
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Providers known to be UWS when the spreadsheet omits zip/address. */
 const KNOWN_UWS_ORG_NAMES = [
   "discovery programs",
