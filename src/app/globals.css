@@ -206,37 +206,51 @@ h6 {
 }
 
 /*
- * Per-category wash pills (homepage filters). Background/color come from
- * --pill-bg / --pill-fg so the cream active gradient never overrides them.
+ * Per-category wash pills (homepage filters). Coordinated with card pill
+ * tags via --pill-bg / --pill-fg, but noticeably muted in idle state so the
+ * filter row sits quietly on the page while selected pills read clearly.
  */
 .category-pill--colored {
-  background: var(--pill-bg);
-  color: var(--pill-fg);
-  border-color: color-mix(in srgb, var(--pill-fg) 18%, transparent);
+  background: color-mix(in srgb, var(--pill-bg) 36%, #ffffff);
+  color: color-mix(in srgb, var(--pill-fg) 72%, #4a4458);
+  border: 1px solid color-mix(in srgb, var(--pill-fg) 16%, rgba(213, 208, 200, 0.72));
 }
 
 .category-pill--colored.category-pill--idle {
-  background: var(--pill-bg);
-  color: var(--pill-fg);
-  border-top-color: color-mix(in srgb, #ffffff 70%, var(--pill-bg));
-  border-bottom-color: color-mix(in srgb, var(--pill-fg) 22%, transparent);
+  background: color-mix(in srgb, var(--pill-bg) 36%, #ffffff);
+  color: color-mix(in srgb, var(--pill-fg) 72%, #4a4458);
+  border-color: color-mix(in srgb, var(--pill-fg) 16%, rgba(213, 208, 200, 0.72));
+  border-top-color: color-mix(in srgb, #ffffff 82%, var(--pill-bg));
+  border-bottom-color: color-mix(in srgb, var(--pill-fg) 18%, rgba(196, 182, 162, 0.5));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 1px 3px rgba(61, 48, 32, 0.04);
 }
 
 .category-pill--colored.category-pill--idle:hover {
-  background: color-mix(in srgb, var(--pill-bg) 88%, #ffffff);
-  filter: none;
+  background: color-mix(in srgb, var(--pill-bg) 58%, #ffffff);
+  color: var(--pill-fg);
+  border-color: color-mix(in srgb, var(--pill-fg) 26%, rgba(213, 208, 200, 0.6));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 6px rgba(61, 48, 32, 0.06);
 }
 
 .category-pill--colored.category-pill--idle:active {
-  background: color-mix(in srgb, var(--pill-bg) 92%, var(--pill-fg));
+  background: color-mix(in srgb, var(--pill-bg) 72%, #ffffff);
+  color: var(--pill-fg);
 }
 
 .category-pill--colored.category-pill--active {
-  background: var(--pill-bg);
+  background: color-mix(in srgb, var(--pill-bg) 85%, #ffffff);
   color: var(--pill-fg);
-  border-color: color-mix(in srgb, var(--pill-fg) 28%, transparent);
-  border-top-color: color-mix(in srgb, var(--pill-fg) 35%, transparent);
-  border-bottom-color: color-mix(in srgb, #ffffff 80%, var(--pill-bg));
+  border-color: color-mix(in srgb, var(--pill-fg) 34%, transparent);
+  border-top-color: color-mix(in srgb, var(--pill-fg) 40%, transparent);
+  border-bottom-color: color-mix(in srgb, #ffffff 78%, var(--pill-bg));
+  box-shadow:
+    inset 0 2px 5px color-mix(in srgb, var(--pill-fg) 16%, transparent),
+    inset 0 1px 2px color-mix(in srgb, var(--pill-fg) 10%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .filter-chip {

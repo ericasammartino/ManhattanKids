@@ -15,6 +15,7 @@ import {
   CATEGORIES,
   SUBCATEGORY_OPTIONS,
   DAY_OPTIONS,
+  MONTH_OPTIONS,
 } from "@/lib/data";
 import {
   encodeFilterList,
@@ -83,6 +84,7 @@ function buildQuery(filters: ActivityFilters, defaultType: string): string {
   setList("category", filters.categories);
   setList("subcategory", filters.subcategories);
   setList("day", filters.days);
+  setList("month", filters.months);
   setList("location", filters.locationBands);
   setList(
     "age",
@@ -123,6 +125,7 @@ function sameFilters(a: ActivityFilters, b: ActivityFilters): boolean {
     listKey(a.activityTypes) === listKey(b.activityTypes) &&
     listKey(a.schedulePatterns) === listKey(b.schedulePatterns) &&
     listKey(a.days) === listKey(b.days) &&
+    listKey(a.months) === listKey(b.months) &&
     listKey(a.ages.map(String)) === listKey(b.ages.map(String)) &&
     a.age === b.age &&
     a.ageMin === b.ageMin &&
@@ -145,9 +148,11 @@ export default function ActivitiesClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const skipUrlSync = useRef(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const urlKey = searchParams.toString();
+  const [prevUrlKey, setPrevUrlKey] = useState(urlKey);
+  const [lastWrittenQs, setLastWrittenQs] = useState<string | null>(null);
   const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
   /** Accordion: only one grouped activity card expanded at a time. */
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
@@ -158,6 +163,7 @@ export default function ActivitiesClient({
       initialFilters.subcategories.length > 0 ||
       initialFilters.locationBands.length > 0 ||
       initialFilters.days.length > 0 ||
+      initialFilters.months.length > 0 ||
       initialFilters.ages.length > 0 ||
       initialFilters.age !== null ||
       initialFilters.ageMin !== null ||
@@ -174,6 +180,7 @@ export default function ActivitiesClient({
     activityType,
     schedulePattern,
     day,
+    month,
     age,
     ageMin,
     ageMax,
@@ -188,7 +195,7 @@ export default function ActivitiesClient({
       const qs = buildQuery(next, defaultType);
       const current = searchParams.toString();
       if (qs === current) return;
-      skipUrlSync.current = true;
+      setLastWrittenQs(qs);
       startTransition(() => {
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
@@ -197,21 +204,21 @@ export default function ActivitiesClient({
   );
 
   // Browser back/forward or inbound links → sync URL into local state.
-  useEffect(() => {
-    if (skipUrlSync.current) {
-      skipUrlSync.current = false;
-      return;
+  if (urlKey !== prevUrlKey) {
+    setPrevUrlKey(urlKey);
+    if (lastWrittenQs === urlKey) {
+      setLastWrittenQs(null);
+    } else {
+      const fromUrl = resolveActivityFilters(
+        Object.fromEntries(searchParams.entries()),
+        { defaultType, defaultNeighborhood: "all" }
+      );
+      fromUrl.neighborhood = "all";
+      if (!sameFilters(fromUrl, filters)) {
+        setFilters(fromUrl);
+      }
     }
-    const fromUrl = resolveActivityFilters(
-      Object.fromEntries(searchParams.entries()),
-      { defaultType, defaultNeighborhood: "all" }
-    );
-    fromUrl.neighborhood = "all";
-    if (!sameFilters(fromUrl, filters)) {
-      applyFiltersState(fromUrl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to URL changes
-  }, [searchParams, defaultType, defaultNeighborhood]);
+  }
 
   useEffect(() => {
     return () => {
@@ -237,6 +244,12 @@ export default function ActivitiesClient({
       }
       if (patch.day !== undefined && patch.days === undefined) {
         next.days = patch.day && patch.day !== "all" ? [patch.day] : [];
+      }
+      if (patch.month !== undefined && patch.months === undefined) {
+        next.months = patch.month && patch.month !== "all" ? [patch.month] : [];
+      }
+      if (patch.months !== undefined) {
+        next.month = patch.months[0] ?? "all";
       }
       if (patch.locationBand !== undefined && patch.locationBands === undefined) {
         next.locationBands =
@@ -294,6 +307,7 @@ export default function ActivitiesClient({
     filters.subcategories.length > 0 ||
     filters.locationBands.length > 0 ||
     filters.days.length > 0 ||
+    filters.months.length > 0 ||
     filters.ages.length > 0 ||
     filters.activityTypes.some((t) => t !== defaultType) ||
     filters.schedulePatterns.length > 0 ||
@@ -312,12 +326,14 @@ export default function ActivitiesClient({
       schedulePatterns: [],
       ages: [],
       days: [],
+      months: [],
       category: "all",
       subcategory: "all",
       locationBand: "all",
       activityType: defaultType,
       schedulePattern: "all",
       day: "all",
+      month: "all",
       age: null,
       ageMin: null,
       ageMax: null,
@@ -602,6 +618,25 @@ export default function ActivitiesClient({
                 {ACTIVITY_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-center text-xs font-semibold text-gray-600">
+                Month
+              </label>
+              <select
+                name="month"
+                value={month}
+                onChange={(e) => update({ month: e.target.value })}
+                className={filterSelectClass}
+              >
+                <option value="all">Any month</option>
+                {MONTH_OPTIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
                   </option>
                 ))}
               </select>

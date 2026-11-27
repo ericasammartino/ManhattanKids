@@ -82,25 +82,6 @@ export default async function Home({ searchParams }: Props) {
           />
         </Suspense>
       </div>
-
-      <section id="about" className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-        <h2 className="text-2xl font-extrabold tracking-tight text-[#1D2B4B]">
-          About
-        </h2>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
-          Little City Life helps NYC families discover afterschool classes,
-          camps, and enrichment on the Upper West Side — all in one place.
-        </p>
-      </section>
-
-      <section id="favorites" className="mx-auto max-w-6xl px-4 pb-16 md:px-6">
-        <h2 className="text-2xl font-extrabold tracking-tight text-[#1D2B4B]">
-          Favorites
-        </h2>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
-          Save programs you love — coming soon.
-        </p>
-      </section>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
@@ -10,7 +10,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { CATEGORIES, DAY_OPTIONS } from "@/lib/data";
+import { CATEGORIES, DAY_OPTIONS, MONTH_OPTIONS } from "@/lib/data";
 import { LOCATION_BANDS } from "@/lib/location-bands";
 import {
   encodeFilterList,
@@ -53,16 +53,22 @@ export default function FilterProgramsPanel({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [showMore, setShowMore] = useState(false);
-
   const fromUrl = resolveActivityFilters(
     Object.fromEntries(searchParams.entries()),
     { defaultType, defaultNeighborhood: "all" }
   );
+  const urlKey = searchParams.toString();
 
+  const [showMore, setShowMore] = useState(
+    fromUrl.months.length > 0 ||
+      fromUrl.activityTypes.some((t) => t !== defaultType) ||
+      fromUrl.schedulePatterns.length > 0
+  );
+  const [prevUrlKey, setPrevUrlKey] = useState(urlKey);
   const [categories, setCategories] = useState(fromUrl.categories);
   const [subcategories, setSubcategories] = useState(fromUrl.subcategories);
   const [days, setDays] = useState(fromUrl.days);
+  const [months, setMonths] = useState(fromUrl.months);
   const [locationBands, setLocationBands] = useState(fromUrl.locationBands);
   const [ages, setAges] = useState(fromUrl.ages.map(String));
   const [activityTypes, setActivityTypes] = useState(
@@ -72,25 +78,24 @@ export default function FilterProgramsPanel({
     fromUrl.schedulePatterns
   );
 
-  useEffect(() => {
-    const next = resolveActivityFilters(
-      Object.fromEntries(searchParams.entries()),
-      { defaultType, defaultNeighborhood: "all" }
-    );
-    setCategories(next.categories);
-    setSubcategories(next.subcategories);
-    setDays(next.days);
-    setLocationBands(next.locationBands);
-    setAges(next.ages.map(String));
-    setActivityTypes(next.activityTypes.filter((t) => t !== defaultType));
-    setSchedulePatterns(next.schedulePatterns);
+  if (urlKey !== prevUrlKey) {
+    setPrevUrlKey(urlKey);
+    setCategories(fromUrl.categories);
+    setSubcategories(fromUrl.subcategories);
+    setDays(fromUrl.days);
+    setMonths(fromUrl.months);
+    setLocationBands(fromUrl.locationBands);
+    setAges(fromUrl.ages.map(String));
+    setActivityTypes(fromUrl.activityTypes.filter((t) => t !== defaultType));
+    setSchedulePatterns(fromUrl.schedulePatterns);
     if (
-      next.activityTypes.some((t) => t !== defaultType) ||
-      next.schedulePatterns.length > 0
+      fromUrl.months.length > 0 ||
+      fromUrl.activityTypes.some((t) => t !== defaultType) ||
+      fromUrl.schedulePatterns.length > 0
     ) {
       setShowMore(true);
     }
-  }, [searchParams, defaultType]);
+  }
 
   const subcategoryOptions = useMemo(
     () =>
@@ -106,6 +111,7 @@ export default function FilterProgramsPanel({
       categories: string[];
       subcategories: string[];
       days: string[];
+      months: string[];
       locationBands: string[];
       ages: string[];
       activityTypes: string[];
@@ -121,6 +127,7 @@ export default function FilterProgramsPanel({
       setList("category", next.categories);
       setList("subcategory", next.subcategories);
       setList("day", next.days);
+      setList("month", next.months);
       setList("location", next.locationBands);
       setList("age", next.ages);
 
@@ -149,6 +156,7 @@ export default function FilterProgramsPanel({
     categories: string[];
     subcategories: string[];
     days: string[];
+    months: string[];
     locationBands: string[];
     ages: string[];
     activityTypes: string[];
@@ -165,6 +173,7 @@ export default function FilterProgramsPanel({
       setSubcategories(patch.subcategories);
     }
     if (patch.days !== undefined) setDays(patch.days);
+    if (patch.months !== undefined) setMonths(patch.months);
     if (patch.locationBands !== undefined) setLocationBands(patch.locationBands);
     if (patch.ages !== undefined) setAges(patch.ages);
     if (patch.activityTypes !== undefined) setActivityTypes(patch.activityTypes);
@@ -176,6 +185,7 @@ export default function FilterProgramsPanel({
       categories: patch.categories ?? categories,
       subcategories: nextSubs,
       days: patch.days ?? days,
+      months: patch.months ?? months,
       locationBands: patch.locationBands ?? locationBands,
       ages: patch.ages ?? ages,
       activityTypes: patch.activityTypes ?? activityTypes,
@@ -187,6 +197,7 @@ export default function FilterProgramsPanel({
     setCategories([]);
     setSubcategories([]);
     setDays([]);
+    setMonths([]);
     setLocationBands([]);
     setAges([]);
     setActivityTypes([]);
@@ -196,6 +207,7 @@ export default function FilterProgramsPanel({
       categories: [],
       subcategories: [],
       days: [],
+      months: [],
       locationBands: [],
       ages: [],
       activityTypes: [],
@@ -207,6 +219,7 @@ export default function FilterProgramsPanel({
     categories.length > 0 ||
     subcategories.length > 0 ||
     days.length > 0 ||
+    months.length > 0 ||
     locationBands.length > 0 ||
     ages.length > 0 ||
     activityTypes.length > 0 ||
@@ -301,15 +314,24 @@ export default function FilterProgramsPanel({
               <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted">
                 More Filters
               </span>
-              <span className="block text-sm font-medium text-foreground">
-                Activity Type, Schedule
+              <span className="block truncate text-sm font-medium text-foreground">
+                Month, Activity Type, Schedule
               </span>
             </span>
           </button>
         </div>
 
         {showMore && (
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <MultiSelectMenu
+              label="Month"
+              icon={<Calendar className="h-4 w-4 text-[#059669]" aria-hidden />}
+              iconBg="#DCFCE7"
+              options={MONTH_OPTIONS.map((m) => ({ value: m, label: m }))}
+              selected={months}
+              emptyLabel="Any Month"
+              onChange={(next) => apply({ months: next })}
+            />
             <MultiSelectMenu
               label="Activity Type"
               icon={<Layers className="h-4 w-4 text-[#059669]" aria-hidden />}
