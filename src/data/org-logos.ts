@@ -49,6 +49,8 @@ export const ORG_LOGOS: Record<string, string> = {
     "/logos/uws-brazilian-jiu-jitsu.png",
   "Modern Martial Arts": "/logos/modern-martial-arts.png",
   "Steps on Broadway Academy": "/logos/steps-on-broadway.png",
+  "Shuffles NYC": "/logos/shuffles-nyc.png",
+  "Broadway Rise": "/logos/broadway-rise.png",
   "Launch Math + Science Centers": "/logos/launch-math.png",
   "Launch @ FunFit": "/logos/launch-math.png",
   "Launch @ FunFit Kids": "/logos/launch-math.png",
