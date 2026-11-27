@@ -11,6 +11,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { logoForOrganization } from "../src/data/org-logos";
 
 type Row = Record<string, unknown>;
 
@@ -31,53 +32,14 @@ const CATEGORY_MAP: Record<string, string> = {
   "Food & Cooking": "Arts & Creativity",
 };
 
-/** Keep in sync with src/data/org-logos.ts */
-const ORG_LOGOS: Record<string, string> = {
-  "Marlene Meyerson JCC Manhattan": "/logos/marlene-meyerson-jcc.png",
-  "West Side YMCA Y Afterschool": "/logos/ymca.jpg",
-  "West Side YMCA": "/logos/ymca.jpg",
-  "Goddard Riverside - Lincoln Center": "/logos/goddard-riverside.png",
-  "Goddard Riverside - Beacon": "/logos/goddard-riverside.png",
-  "Supermud Pottery": "/logos/supermud.jpg",
-  "Bloomingdale Library": "/logos/bloomingdale-library.png",
-  "Riverside Library": "/logos/riverside-library.png",
-  Robofun: "/logos/robofun.png",
-  ZPlaySchool: "/logos/z-play.jpg",
-  "Writopia Lab Upper West Side": "/logos/writopia-lab.png",
-  "Tim Morehouse Fencing Club": "/logos/tim-morehouse-fencing.jpg",
-  "NYC Elite Gymnastics": "/logos/nyc-elite-gymnastics.jpg",
-  "Elliott’s Classes": "/logos/elliotts-classes.png",
-  "FunFit Kids": "/logos/funfit.png",
-  "Central Park Tennis Center": "/logos/central-park-tennis.jpg",
-  "Discovery Programs": "/logos/discovery-programs.png",
-  "Harmony By Karate": "/logos/harmony-by-karate.png",
-  "Broadway Dance Center Children & Teens": "/logos/broadway-dance-center.png",
-  "Play On! Studios": "/logos/play-on-studios.png",
-  "The Art Farm": "/logos/the-art-farm.png",
-  "PLAYDAY UWS": "/logos/playday-uws.png",
-  "Spotlight Kids NY": "/logos/spotlight-kids-ny.png",
-  "West Side Dance Studio": "/logos/west-side-dance-studio.png",
-  "Dance with Miss Rachel": "/logos/dance-with-miss-rachel.png",
-  "Chess Max Academy": "/logos/chess-max-academy.png",
-  SOMATH: "/logos/school-of-math.png",
-  "Wise Wonder": "/logos/wise-wonder.png",
-  Bonjour: "/logos/bonjour.png",
-  "The Little Gym Upper Westside": "/logos/the-little-gym.png",
-  "New York Empire Baseball": "/logos/ny-empire-baseball.png",
-  "Mo’ Motion": "/logos/mo-motion.png",
-  "Soccer Stars": "/logos/soccer-stars.png",
-  "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
-    "/logos/uws-brazilian-jiu-jitsu.jpg",
-  "Modern Martial Arts": "/logos/modern-martial-arts.png",
-};
-
 /** Fallback provider websites when Business Discovery / Source URL is empty. */
 const ORG_WEBSITES: Record<string, string> = {
   "Marlene Meyerson JCC Manhattan": "https://jccmanhattan.org/",
   "West Side YMCA Y Afterschool": "https://ymcanyc.org/locations/west-side-ymca",
   "West Side YMCA": "https://ymcanyc.org/locations/west-side-ymca",
-  "Goddard Riverside - Lincoln Center": "https://www.goddard.org/",
-  "Goddard Riverside - Beacon": "https://www.goddard.org/",
+  "Goddard Riverside - Lincoln Center": "https://goddard.org/lsnc/",
+  "Goddard Riverside - Beacon":
+    "https://goddard.org/programs/children-and-youth/beacon/",
   "Supermud Pottery": "https://www.supermud.com/",
   "Bloomingdale Library": "https://www.nypl.org/locations/bloomingdale",
   "Riverside Library": "https://www.nypl.org/locations/riverside",
@@ -112,6 +74,7 @@ const ORG_WEBSITES: Record<string, string> = {
   "Steps on Broadway Academy": "https://www.stepsnyc.com/",
   "Launch Math + Science Centers": "https://www.launcheducation.com/",
   "Launch @ FunFit": "https://www.launcheducation.com/",
+  "Launch @ FunFit Kids": "https://www.launcheducation.com/",
   "Baker Piano Studio": "https://www.bakerpianostudio.com/",
   "UWS Piano School": "https://www.uwspianoschool.com/",
   "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
@@ -120,6 +83,16 @@ const ORG_WEBSITES: Record<string, string> = {
   "Children’s Aid-Frederick Douglass Community Center":
     "https://www.childrensaidnyc.org/",
   "Strycker’s Bay Neighborhood Council": "https://www.stryckersbay.org/",
+  "Bloomingdale School of Music": "https://www.bsmny.org/",
+  "Broadway Rise": "https://www.broadwayrise.com/",
+  "Children's Art Classes – NYC":
+    "https://ny-new-york.childrensartclasses.com/",
+  "Imagine Skateboarding": "https://www.imagineskateboarding.com/",
+  "Russian Children Studio": "https://russianchildrenstudio.org/",
+  SayNinja: "https://www.sayninja.com/locations/amsterdam-ave/",
+  "Shuffles NYC": "https://www.shufflesnyc.com/",
+  "Silver Music": "https://silvermusic.org/",
+  "West Amadeus Music Studio": "https://westamadeus.com/",
 };
 
 function normalizeName(name: string): string {
@@ -187,6 +160,8 @@ function to24h(value: unknown): string | null {
   const ap = m[3]?.toUpperCase();
   if (ap === "PM" && h < 12) h += 12;
   if (ap === "AM" && h === 12) h = 0;
+  // Bare 1:00–7:59 without AM/PM in afterschool sheets is afternoon PM (e.g. "3:45" → "15:45").
+  if (!ap && h >= 1 && h <= 7) h += 12;
   return `${String(h).padStart(2, "0")}:${min}`;
 }
 
@@ -199,18 +174,19 @@ function parseZip(address: string | null): string | null {
 /** Best-effort UWS tag when the sheet omits Neighborhood/zip. */
 function inferNeighborhood(
   address: string | null,
-  orgName: string
+  orgName: string,
+  crossStreets?: string | null
 ): string | null {
   const zip = parseZip(address);
   if (zip && ["10023", "10024", "10025", "10069"].includes(zip)) {
     return "Upper West Side";
   }
-  const a = (address ?? "").toLowerCase();
+  const a = `${address ?? ""} ${crossStreets ?? ""}`.toLowerCase();
   if (
     /\bwest end ave/.test(a) ||
-    /\briverside (blvd|drive|dr)\b/.test(a) ||
-    /\bamsterdam ave/.test(a) ||
-    /\bcolumbus ave/.test(a) ||
+    /\briverside(?:\s+(?:blvd|drive|dr))?\b/.test(a) ||
+    /\bamsterdam(?:\s+ave)?\b/.test(a) ||
+    /\bcolumbus(?:\s+ave)?\b/.test(a) ||
     /\bcentral park west\b/.test(a) ||
     /\bbroadway\b/.test(a)
   ) {
@@ -467,12 +443,20 @@ async function main() {
     const classDescription =
       text(row["Class Description"]) ?? text(row["Class description"]);
     const notes = text(row.Notes);
+    // DB28+: some rows store class or provider URLs in trailing unlabeled columns.
+    const trailingUrl =
+      Object.entries(row)
+        .filter(([k]) => /^__EMPTY/.test(k))
+        .map(([, v]) => text(v))
+        .find((v) => v && /^https?:\/\//i.test(v)) ?? null;
     const sourceUrl =
       text(row["Source URL"]) ??
       (text(row.Registration)?.startsWith("http")
         ? text(row.Registration)
         : null) ??
+      trailingUrl ??
       websiteForOrg(orgName);
+    const orgWebsite = websiteForOrg(orgName) ?? sourceUrl;
     const sourceType = text(row["Source Type"]);
     const zip = parseZip(address);
 
@@ -484,13 +468,13 @@ async function main() {
         "Organization Name": orgName,
         "Organization Type": "Afterschool Provider",
         Description: null,
-        Website: sourceUrl,
+        Website: orgWebsite,
         "Contact Email": null,
         Phone: null,
-        "Logo URL": ORG_LOGOS[orgName] ?? null,
+        "Logo URL": logoForOrganization(orgName),
         "Instagram URL": null,
         Status: "Active",
-        "Source URL": sourceUrl,
+        "Source URL": orgWebsite,
         "Last Verified": null,
         Notes: sourceType,
         "External ID": null,
@@ -511,12 +495,12 @@ async function main() {
         "Street Address": address,
         "Address Line 2": null,
         "Cross Streets": isPlaceholderCross(crossStreets) ? null : crossStreets,
-        Neighborhood: inferNeighborhood(address, orgName),
+        Neighborhood: inferNeighborhood(address, orgName, crossStreets),
         Borough: "Manhattan",
         "Zip Code": zip,
         Latitude: null,
         Longitude: null,
-        Website: sourceUrl,
+        Website: orgWebsite,
         Phone: null,
         "Opening Hours": null,
         "Admission Price": null,
@@ -528,7 +512,7 @@ async function main() {
         "Kid Friendly Features": null,
         "Image URL": null,
         "Public Listing": "Yes",
-        "Source URL": sourceUrl,
+        "Source URL": orgWebsite,
         Status: "Active",
         "Last Verified": null,
         Notes: null,
