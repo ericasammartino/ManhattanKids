@@ -32,57 +32,63 @@ const CATEGORY_MAP: Record<string, string> = {
   "Food & Cooking": "Arts & Creativity",
 };
 
-/** Fallback provider websites when Business Discovery / Source URL is empty. */
+/** Canonical organization renames applied during import. */
+const ORG_NAME_ALIASES: Record<string, string> = {
+  "west side ymca y afterschool": "West Side YMCA",
+};
+
+/** Fallback provider websites when the spreadsheet omits a URL. */
 const ORG_WEBSITES: Record<string, string> = {
-  "Marlene Meyerson JCC Manhattan": "https://jccmanhattan.org/",
-  "West Side YMCA Y Afterschool": "https://ymcanyc.org/locations/west-side-ymca",
-  "West Side YMCA": "https://ymcanyc.org/locations/west-side-ymca",
+  "Marlene Meyerson JCC Manhattan": "https://www.mmjccm.org/children-families",
+  "West Side YMCA":
+    "https://ymcanyc.org/locations/west-side-ymca/programs-and-classes/kids-family/y-afterschool",
   "Goddard Riverside - Lincoln Center": "https://goddard.org/lsnc/",
   "Goddard Riverside - Beacon":
     "https://goddard.org/programs/children-and-youth/beacon/",
-  "Supermud Pottery": "https://www.supermud.com/",
+  "Supermud Pottery": "https://www.supermudpottery.com/",
   "Bloomingdale Library": "https://www.nypl.org/locations/bloomingdale",
   "Riverside Library": "https://www.nypl.org/locations/riverside",
   Robofun: "https://www.robofun.org/",
-  ZPlaySchool: "https://www.zplayschool.com/",
+  ZPlaySchool: "https://zplayschool.com/",
   "Writopia Lab Upper West Side": "https://www.writopialab.org/",
   "Tim Morehouse Fencing Club": "https://www.timmorehousefencing.com/",
-  "NYC Elite Gymnastics": "https://www.nycelitegymnastics.com/",
+  "NYC Elite Gymnastics": "https://nycelite.com/",
   "Elliott’s Classes": "https://www.elliottsclasses.com/",
-  "FunFit Kids": "https://www.funfitkids.com/",
+  "FunFit Kids": "https://www.funfitnyc.com/",
   "Central Park Tennis Center": "https://www.centralparktenniscenter.com/",
   "Discovery Programs": "https://www.discoveryprograms.com/",
-  "Harmony By Karate": "https://www.harmonybykarate.com/",
-  "Broadway Dance Center Children & Teens":
-    "https://www.broadwaydancecenter.com/children-teens",
+  "Harmony By Karate": "https://harmonybykarate.com/",
+  "Broadway Dance Center Children & Teens": "https://broadwaydancecenter.com/",
   "Play On! Studios": "https://www.playonstudios.com/",
   "The Art Farm": "https://www.theartfarminc.com/",
-  "PLAYDAY UWS": "https://www.playdaynyc.com/",
-  "Spotlight Kids NY": "https://www.spotlightkidsny.com/",
-  "West Side Dance Studio": "https://westsidedancestudio.com/",
+  "PLAYDAY UWS": "https://www.playday.com/uws",
+  "Spotlight Kids NY": "https://spotlightkidsny.com",
+  "West Side Dance Studio": "https://www.westsidedancestudio.com/",
   "Dance with Miss Rachel": "https://www.dancewithmissrachel.com/",
-  "Chess Max Academy": "https://www.chessmaxacademy.com/",
-  SOMATH: "https://www.schoolofmath.com/",
-  "Wise Wonder": "https://www.wisewonder.org/",
-  Bonjour: "https://www.bonjourlanguages.com/",
-  "The Little Gym Upper Westside": "https://www.thelittlegym.com/",
-  "New York Empire Baseball": "https://www.nyempirebaseball.com/",
+  "Chess Max Academy": "https://chessmaxacademy.com/",
+  SOMATH: "https://www.schoolofmath.us/",
+  "Wise Wonder": "https://wisewonder.com/",
+  Bonjour: "https://bonjourny.com/",
+  "The Little Gym Upper Westside":
+    "https://www.thelittlegym.com/new-york-upper-westside/",
+  "New York Empire Baseball": "https://newyorkempirebaseball.org/",
   "Mo’ Motion": "https://www.momotiondance.com/",
-  "Soccer Stars": "https://www.soccerstars.com/",
-  "Super Soccer Stars": "https://www.soccerstars.com/",
-  "Modern Martial Arts": "https://www.modernmartialarts.com/",
-  "Steps on Broadway Academy": "https://www.stepsnyc.com/",
-  "Launch Math + Science Centers": "https://www.launcheducation.com/",
-  "Launch @ FunFit": "https://www.launcheducation.com/",
-  "Launch @ FunFit Kids": "https://www.launcheducation.com/",
-  "Baker Piano Studio": "https://www.bakerpianostudio.com/",
+  "Soccer Stars": "https://www.soccerstars.com/super-soccer-stars/",
+  "Super Soccer Stars": "https://www.soccerstars.com/super-soccer-stars/",
+  "Modern Martial Arts": "https://www.mmanewyorkcity.com/",
+  "Steps on Broadway Academy": "https://www.stepsnyc.com/academy/",
+  "Launch Math + Science Centers": "https://launchmath.com/",
+  "Launch @ FunFit": "https://launchmath.com/",
+  "Launch @ FunFit Kids": "https://launchmath.com/",
+  "Baker Piano Studio": "https://www.bakerpianolessons.com/",
   "UWS Piano School": "https://www.uwspianoschool.com/",
   "Upper West Side Brazilian Jiu-Jitsu / Kenshikai":
-    "https://www.uwsbjj.com/",
-  "Broadway TaeKwonDo": "https://www.broadwaytkd.com/",
+    "https://www.uwskenshikai.com/index18316m.php",
+  "Broadway TaeKwonDo": "https://broadwaytkd.com/",
   "Children’s Aid-Frederick Douglass Community Center":
-    "https://www.childrensaidnyc.org/",
-  "Strycker’s Bay Neighborhood Council": "https://www.stryckersbay.org/",
+    "https://www.childrensaidnyc.org/programs/location/frederick-douglass-community-center",
+  "Strycker’s Bay Neighborhood Council":
+    "https://robhen.com/new-york/manhattan/dehostos-community-center/",
   "Bloomingdale School of Music": "https://www.bsmny.org/",
   "Broadway Rise": "https://www.broadwayrise.com/",
   "Children's Art Classes – NYC":
@@ -93,6 +99,7 @@ const ORG_WEBSITES: Record<string, string> = {
   "Shuffles NYC": "https://www.shufflesnyc.com/",
   "Silver Music": "https://silvermusic.org/",
   "West Amadeus Music Studio": "https://westamadeus.com/",
+  "The Art Studio NY": "https://www.theartstudiony.com/",
 };
 
 function normalizeName(name: string): string {
@@ -102,6 +109,24 @@ function normalizeName(name: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+function canonicalOrgName(raw: string): string {
+  return ORG_NAME_ALIASES[normalizeName(raw)] ?? raw;
+}
+
+function validHttpUrl(value: unknown): string | null {
+  const s = text(value);
+  if (!s) return null;
+  try {
+    const parsed = new URL(s);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return s;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function isPlaceholderCross(value: string | null): boolean {
@@ -362,22 +387,29 @@ async function main() {
   const rows = raw.filter((r) => text(r["Session / Class Name"]) && text(r.Organization));
   console.log(`Found ${rows.length} session rows on "${sheetName}"`);
 
-  // Optional website hints from Business Discovery / Organizations sheets.
-  const websiteByName = new Map<string, string>();
+  // Build website hints: prefer spreadsheet sheets over hardcoded fallbacks.
+  const fallbackWebsiteByName = new Map<string, string>();
   for (const [name, url] of Object.entries(ORG_WEBSITES)) {
-    websiteByName.set(normalizeName(name), url);
+    const valid = validHttpUrl(url);
+    if (valid) {
+      fallbackWebsiteByName.set(normalizeName(canonicalOrgName(name)), valid);
+    }
   }
+
+  const sheetOrgWebsiteByName = new Map<string, string>();
   const discoverySheet = workbook.Sheets["Business Discovery"];
   if (discoverySheet) {
     const discovery = XLSX.utils.sheet_to_json(discoverySheet, {
       defval: null,
     }) as Row[];
     for (const row of discovery) {
-      const name = text(row["Business Name"]) ?? text(row["Organization Name"]);
-      const website = text(row.Website) ?? text(row["Website URL"]);
-      if (!name || !website) continue;
-      const key = normalizeName(name);
-      if (!websiteByName.has(key)) websiteByName.set(key, website);
+      const rawName = text(row["Business Name"]) ?? text(row["Organization Name"]);
+      const website = validHttpUrl(row.Website) ?? validHttpUrl(row["Website URL"]);
+      if (!rawName || !website) continue;
+      const key = normalizeName(canonicalOrgName(rawName));
+      if (!sheetOrgWebsiteByName.has(key)) {
+        sheetOrgWebsiteByName.set(key, website);
+      }
     }
   }
   const orgsSheet = workbook.Sheets.Organizations;
@@ -386,22 +418,73 @@ async function main() {
       defval: null,
     }) as Row[];
     for (const row of orgRows) {
-      const name = text(row["Organization Name"]);
-      const website = text(row.Website) ?? text(row["Source URL"]);
-      if (!name || !website) continue;
-      const key = normalizeName(name);
-      if (!websiteByName.has(key)) websiteByName.set(key, website);
+      const rawName = text(row["Organization Name"]);
+      const website = validHttpUrl(row.Website) ?? validHttpUrl(row["Source URL"]);
+      if (!rawName || !website) continue;
+      const key = normalizeName(canonicalOrgName(rawName));
+      // Organizations sheet overrides Business Discovery.
+      sheetOrgWebsiteByName.set(key, website);
     }
   }
 
+  function rowWebsite(row: Row): string | null {
+    const trailingUrl =
+      Object.entries(row)
+        .filter(([k]) => /^__EMPTY/.test(k))
+        .map(([, v]) => validHttpUrl(v))
+        .find((v): v is string => Boolean(v)) ?? null;
+    return (
+      validHttpUrl(row.Website) ??
+      validHttpUrl(row["Website URL"]) ??
+      validHttpUrl(row["Source URL"]) ??
+      validHttpUrl(row.Registration) ??
+      trailingUrl
+    );
+  }
+
+  // Collect per-org URLs directly from Manual Entry Session so updated
+  // spreadsheet URLs always beat stale fallbacks.
+  const sessionUrlsByOrg = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const orgName = canonicalOrgName(text(row.Organization)!);
+    const key = normalizeName(orgName);
+    const url = rowWebsite(row);
+    if (!url) continue;
+    let set = sessionUrlsByOrg.get(key);
+    if (!set) {
+      set = new Set<string>();
+      sessionUrlsByOrg.set(key, set);
+    }
+    set.add(url);
+  }
+
   function websiteForOrg(orgName: string): string | null {
-    return websiteByName.get(normalizeName(orgName)) ?? null;
+    const key = normalizeName(orgName);
+    const sessionUrls = sessionUrlsByOrg.get(key);
+    if (sessionUrls && sessionUrls.size === 1) {
+      return [...sessionUrls][0];
+    }
+    if (sessionUrls && sessionUrls.size > 1) {
+      // Provider uses class-specific URLs (e.g. Broadway Rise): prefer a matching
+      // org-level URL from other sheets, else derive the shared origin.
+      const sheetOrg = sheetOrgWebsiteByName.get(key);
+      if (sheetOrg) return sheetOrg;
+      const first = [...sessionUrls][0];
+      try {
+        return `${new URL(first).origin}/`;
+      } catch {
+        return first;
+      }
+    }
+    return sheetOrgWebsiteByName.get(key) ?? fallbackWebsiteByName.get(key) ?? null;
   }
 
   const orgIds = new Map<string, string>();
   const locIds = new Map<string, string>(); // key: orgId|address
   const locById = new Map<string, Row>();
   const activityIds = new Map<string, string>(); // key: orgId|name|category|ageMin|ageMax
+  const activityById = new Map<string, Row>();
+  const activityNotesById = new Map<string, string[]>();
   // Deduplicates overlapping day slots created when expanding multi-day rows.
   const sessionBySlot = new Map<string, { session: Row; fromMultiDay: boolean }>();
 
@@ -416,7 +499,7 @@ async function main() {
   let sessSeq = 1;
 
   for (const row of rows) {
-    const orgName = text(row.Organization)!;
+    const orgName = canonicalOrgName(text(row.Organization)!);
     const className = text(row["Session / Class Name"])!;
     const categoryRaw = text(row.Category);
     const category =
@@ -443,20 +526,8 @@ async function main() {
     const classDescription =
       text(row["Class Description"]) ?? text(row["Class description"]);
     const notes = text(row.Notes);
-    // DB28+: some rows store class or provider URLs in trailing unlabeled columns.
-    const trailingUrl =
-      Object.entries(row)
-        .filter(([k]) => /^__EMPTY/.test(k))
-        .map(([, v]) => text(v))
-        .find((v) => v && /^https?:\/\//i.test(v)) ?? null;
-    const sourceUrl =
-      text(row["Source URL"]) ??
-      (text(row.Registration)?.startsWith("http")
-        ? text(row.Registration)
-        : null) ??
-      trailingUrl ??
-      websiteForOrg(orgName);
-    const orgWebsite = websiteForOrg(orgName) ?? sourceUrl;
+    const orgWebsite = websiteForOrg(orgName);
+    const sourceUrl = rowWebsite(row) ?? orgWebsite;
     const sourceType = text(row["Source Type"]);
     const zip = parseZip(address);
 
@@ -543,7 +614,9 @@ async function main() {
     if (!activityIds.has(actKey)) {
       const id = `ACT-${pad(actSeq++)}`;
       activityIds.set(actKey, id);
-      activities.push({
+      const initialNotes = notes ? [notes] : [];
+      activityNotesById.set(id, initialNotes);
+      const activityRow: Row = {
         "Activity ID": id,
         "Activity Name": className,
         "Organization ID": orgId,
@@ -571,15 +644,28 @@ async function main() {
         "Source URL": sourceUrl,
         Status: "Active",
         "Last Verified": null,
-        Notes: [sessionDates, sourceType, notes].filter(Boolean).join(" · ") || null,
-      });
-    } else if (classDescription) {
-      // Later rows may carry the blurb when the first grouping row was empty.
-      const existing = activities.find(
-        (a) => a["Activity ID"] === activityIds.get(actKey)
-      );
-      if (existing && !text(existing.Description)) {
+        Notes: notes,
+      };
+      activities.push(activityRow);
+      activityById.set(id, activityRow);
+    } else {
+      const existing = activityById.get(activityIds.get(actKey)!)!;
+      // Later rows may carry the blurb, URL, or notes when the first row was empty.
+      if (classDescription && !text(existing.Description)) {
         existing.Description = classDescription;
+      }
+      if (sourceUrl && !text(existing["Registration URL"])) {
+        existing["Registration URL"] = sourceUrl;
+      }
+      if (sourceUrl && !text(existing["Source URL"])) {
+        existing["Source URL"] = sourceUrl;
+      }
+      if (notes) {
+        const list = activityNotesById.get(existing["Activity ID"] as string)!;
+        if (!list.includes(notes)) {
+          list.push(notes);
+          existing.Notes = list.join(" · ");
+        }
       }
     }
     const actId = activityIds.get(actKey)!;

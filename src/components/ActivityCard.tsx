@@ -29,7 +29,7 @@ export default function ActivityCard({ activity, variant = "default" }: Props) {
   const icon = CATEGORY_ICONS[category] ?? "🎯";
   const { src: imgSrc, isLogo, textFallback } = resolveActivityImage(activity);
   const imgClass = isLogo
-    ? "w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+    ? "w-full h-full object-contain p-3.5 group-hover:scale-105 transition-transform duration-300"
     : "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300";
   const imgWrapClass =
     isLogo || textFallback
